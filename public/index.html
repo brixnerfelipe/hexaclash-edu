@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HexaClash Edu - Aluno</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #2c3e50;
+            color: white;
+            margin: 0;
+            text-align: center;
+        }
+        .container {
+            background-color: #34495e;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            max-width: 400px;
+            width: 90%;
+            
+            /* Centraliza a própria .container no meio da tela se estiver sozinha */
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        h1 {
+            color: #f1c40f;
+            margin-top: 0;
+        }
+        input {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            margin-top: 20px;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #27ae60;
+        }
+        .error {
+            color: #e74c3c;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        #waiting-screen {
+            display: none;
+        }
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid #f1c40f;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div class="container" id="login-screen">
+        <h1>HexaClash Edu</h1>
+        <p>Digite o PIN da sala para entrar na batalha!</p>
+        
+        <input type="text" id="pin-input" placeholder="PIN da Sala (ex: 1234)" maxlength="4">
+        <input type="text" id="name-input" placeholder="Seu Nome (ex: João Silva)" maxlength="15">
+        
+        <button id="join-btn">ENTRAR</button>
+        <div id="error-msg" class="error"></div>
+    </div>
+
+    <div class="container" id="waiting-screen">
+        <h1>Conectado!</h1>
+        <p id="player-welcome"></p>
+        <div class="spinner"></div>
+        <p>Aguardando o professor iniciar a partida...</p>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        window.socket = io();
+
+        const loginScreen = document.getElementById('login-screen');
+        const waitingScreen = document.getElementById('waiting-screen');
+        const pinInput = document.getElementById('pin-input');
+        const nameInput = document.getElementById('name-input');
+        const joinBtn = document.getElementById('join-btn');
+        const errorMsg = document.getElementById('error-msg');
+        const playerWelcome = document.getElementById('player-welcome');
+
+        joinBtn.addEventListener('click', () => {
+            const pin = pinInput.value.trim();
+            const name = nameInput.value.trim();
+
+            if (!pin || !name) {
+                errorMsg.textContent = 'Preencha o PIN e o seu nome!';
+                return;
+            }
+
+            errorMsg.textContent = 'Conectando...';
+            window.socket.emit('join_room', { pin, name });
+        });
+
+        window.socket.on('join_error', (msg) => {
+            errorMsg.textContent = msg;
+        });
+
+        window.socket.on('join_success', (data) => {
+            window.gameRoomPin = data.pin;
+            loginScreen.style.display = 'none';
+            waitingScreen.style.display = 'block';
+            playerWelcome.textContent = `Olá, ${data.name}! Você está na sala ${data.pin}.`;
+        });
+
+        window.socket.on('game_started', () => {
+            waitingScreen.innerHTML = `<h1>Carregando o Mapa...</h1><div class="spinner"></div>`;
+        });
+        
+        window.socket.on('room_closed', (msg) => {
+            alert(msg);
+            location.reload();
+        });
+    </script>
+
+    <div id="game-ui" style="display: none;">
+        <div class="app-container">
+        <!-- Dashboard do Professor / Jogador -->
+        <aside class="dashboard">
+            <div class="dashboard-header">
+                <h1>HexaClash Edu</h1>
+                <p id="dashboard-subtitle">Painel do Professor</p>
+            </div>
+            
+            <div class="controls" id="lobby-controls">
+                <button id="add-player-btn" class="btn-primary">Adicionar Jogador (+)</button>
+                
+                <div style="background: #eee; border: 2px dashed #999; border-radius: 8px; padding: 15px; margin-top: 15px; text-align: center;">
+                    <h3 style="font-size: 16px; margin-bottom: 10px; color: #444;">Banco de Questões</h3>
+                    <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Col 1: Pergunta | Col 2: Correta | Col 3-5: Erradas</p>
+                    <input type="file" id="csv-upload" accept=".csv" style="display: none;">
+                    <label for="csv-upload" class="btn-secondary" style="display: block; padding: 10px; font-size: 14px; margin-bottom: 10px;">Escolher Arquivo .CSV</label>
+                    <span id="csv-count" style="font-size: 14px; font-weight: bold; color: #d35400;">Questões válidas: 0</span>
+                </div>
+                
+                <button id="start-game-btn" class="btn-secondary" style="margin-top: 15px;" disabled>Iniciar Partida</button>
+            </div>
+
+            <!-- Header para Draft/Turno -->
+            <div class="draft-panel" id="draft-panel" style="display: none;">
+                <h2 id="draft-counter-text">Exércitos para distribuir: 0</h2>
+                <button id="confirm-draft-btn" class="btn-primary" style="display: none; margin-top: 10px; width: 100%;">Confirmar Posicionamento</button>
+            </div>
+
+            <div class="attack-panel" id="attack-panel" style="display: none;">
+                <h2>Fase de Ataques</h2>
+                <p style="font-size: 14px; margin: 10px 0;">Selecione um território seu (com > 1 exército) e um inimigo vizinho para atacar!</p>
+                <button id="end-attack-btn" class="btn-primary btn-danger" style="width: 100%;">Encerrar Turnos de Ataque</button>
+            </div>
+
+            <div class="players-container">
+                <div id="players-list"></div>
+            </div>
+        </aside>
+
+        <!-- Área Principal / Tabuleiro -->
+        <main class="map-container" id="map-container">
+            <svg id="game-map" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid meet"></svg>
+        </main>
+
+        <!-- Overlay de Turno (Hot Seat) -->
+        <div id="hotseat-modal" class="overlay-modal" style="display: none;">
+            <div class="modal-content">
+                <h1 id="hotseat-player-name">Vez do Jogador!</h1>
+                <button id="take-control-btn" class="btn-primary" style="font-size: 24px; padding: 20px 40px;">Assumir o Controle</button>
+            </div>
+        </div>
+
+        <!-- Quiz Modal -->
+        <div id="quiz-modal" class="overlay-modal" style="display: none;">
+            <div class="modal-content quiz-content" id="quiz-content-active">
+                <h2 id="quiz-question">Pergunta?</h2>
+                <div id="quiz-options" class="quiz-options">
+                    <!-- Botões injetados via JS -->
+                </div>
+                <div class="timer-bar-container">
+                    <div id="timer-bar" class="timer-bar"></div>
+                </div>
+            </div>
+            
+            <div class="modal-content quiz-failure" id="quiz-content-failure" style="display: none;">
+                <h1 style="font-size: 60px; margin-bottom: 10px;">❌</h1>
+                <h2>Ataque Falhou!</h2>
+                <p>Resposta incorreta ou tempo esgotado.</p>
+                <p class="penalty-text">Você perdeu 1 exército no território de origem por desorganização tática.</p>
+                <button id="btn-quiz-fail-continue" class="btn-primary btn-danger" style="margin-top: 20px;">Retirar Tropas</button>
+            </div>
+        </div>
+
+        <!-- Battle Arena Modal -->
+        <div id="battle-modal" class="overlay-modal" style="display: none;">
+            <div class="modal-content battle-content">
+                <h2>Arena de Batalha</h2>
+                <div class="battle-grid">
+                    <div class="battle-col attack-col">
+                        <h3>Ataque</h3>
+                        <div id="battle-dice-attack" class="dice-container"></div>
+                    </div>
+                    <div class="battle-col defense-col">
+                        <h3>Defesa</h3>
+                        <div id="battle-dice-defense" class="dice-container"></div>
+                    </div>
+                </div>
+                <div id="battle-results-text" class="battle-results">
+                    <!-- Injetado via JS -->
+                </div>
+                <button id="btn-battle-continue" class="btn-primary" style="display: none; margin-top: 20px;">Continuar</button>
+            </div>
+        </div>
+        
+        <!-- Victory Modal -->
+        <div id="victory-modal" class="overlay-modal" style="display: none;">
+            <div id="confetti-container"></div>
+            <div class="modal-content victory-content" style="z-index: 10;">
+                <h1 style="font-size: 60px; color: #f1c40f; text-shadow: 3px 3px 0 #d35400; margin-bottom: 20px;">VITÓRIA!</h1>
+                <h2 id="victory-subtitle" style="font-size: 28px; margin-bottom: 20px;">O jogador [Nome] dominou o mapa!</h2>
+                <div style="background: #fff3cd; border: 3px dashed #f1c40f; padding: 20px; border-radius: 12px; margin-bottom: 30px;">
+                    <p style="font-size: 16px; color: #555; margin-bottom: 5px;">Sua missão secreta era:</p>
+                    <p id="victory-objective" style="font-size: 20px; font-weight: bold; color: #333;"></p>
+                </div>
+                <button id="btn-return-lobby" class="btn-primary" style="font-size: 20px; padding: 15px 30px;">Voltar ao Lobby</button>
+            </div>
+        </div>
+    </div>
+
+    
+    </div>
+    <script src="js/mapData.js?v=2"></script>
+    <script src="js/logic.js?v=2"></script>
+    <script src="js/ui.js?v=2"></script>
+    <script src="js/main.js?v=2"></script>
+</body>
+
+</html>

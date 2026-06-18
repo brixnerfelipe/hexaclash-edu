@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HexaClash Edu - Dashboard do Professor</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #ecf0f1;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            background-color: #34495e;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .controls {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            flex: 1;
+        }
+        button {
+            padding: 15px 25px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover { background-color: #2980b9; }
+        .btn-create { background-color: #2ecc71; width: 100%; }
+        .btn-create:hover { background-color: #27ae60; }
+        
+        .room-card {
+            background: #fff;
+            border-left: 5px solid #f1c40f;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .room-pin {
+            font-size: 48px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 0;
+            letter-spacing: 5px;
+        }
+        .players-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 15px;
+        }
+        .players-list li {
+            background: #ecf0f1;
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .btn-host {
+            background-color: #9b59b6;
+            margin-top: 15px;
+            text-decoration: none;
+            display: inline-block;
+            color: white;
+        }
+        .btn-host:hover { background-color: #8e44ad; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Centro de Comando do Professor</h1>
+    </div>
+
+    <div class="controls">
+        <div class="card">
+            <h2>Gerenciar Salas</h2>
+            <button id="create-room-btn" class="btn-create">Criar Nova Sala</button>
+        </div>
+        
+        <div class="card">
+            <h2>Banco de Questões (Opcional por enquanto)</h2>
+            <p>Carregue o CSV aqui para injetar nas salas abertas.</p>
+            <input type="file" id="csv-upload" accept=".csv">
+            <p id="csv-count">Nenhum arquivo lido ainda.</p>
+        </div>
+    </div>
+
+    <div id="rooms-container">
+        <!-- Cards das salas renderizados aqui -->
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/mapData.js?v=2"></script>
+    <script src="js/logic.js?v=2"></script>
+    <script>
+        const socket = io();
+        const createRoomBtn = document.getElementById('create-room-btn');
+        const roomsContainer = document.getElementById('rooms-container');
+        const csvUpload = document.getElementById('csv-upload');
+        const csvCount = document.getElementById('csv-count');
+        
+        let activeRooms = [];
+        let parsedQuestions = [];
+        let roomPlayers = {};
+
+        // UI Criar Sala
+        createRoomBtn.addEventListener('click', () => {
+            socket.emit('create_room');
+        });
+
+        // Escuta retorno do server
+        socket.on('room_created', (pin) => {
+            activeRooms.push(pin);
+            roomPlayers[pin] = [];
+            renderRoomCard(pin);
+            // Injeta questoes se já tiver lido o csv
+            if (parsedQuestions.length > 0) {
+                socket.emit('upload_csv', { pin: pin, bank: parsedQuestions });
+            }
+        });
+
+        socket.on('update_players', (data) => {
+            roomPlayers[data.pin] = data.players;
+            const list = document.getElementById(`players-${data.pin}`);
+            if (list) {
+                if (data.players.length === 0) {
+                    list.innerHTML = `<li>Aguardando alunos...</li>`;
+                } else {
+                    list.innerHTML = '';
+                    data.players.forEach(p => {
+                        const li = document.createElement('li');
+                        li.textContent = p.name;
+                        list.appendChild(li);
+                    });
+                }
+            }
+        });
+
+        socket.on('room_closed', (msg) => {
+            alert(msg);
+            location.reload();
+        });
+
+        function renderRoomCard(pin) {
+            const card = document.createElement('div');
+            card.className = 'room-card';
+            card.id = `room-${pin}`;
+            card.innerHTML = `
+                <h2>SALA ABERTA</h2>
+                <p class="room-pin">${pin}</p>
+                <button class="btn-start-game" id="start-btn-${pin}" style="background-color: #e67e22; margin-top: 15px; width: 100%;">Iniciar Partida</button>
+                <a href="host.html?pin=${pin}" target="_blank" style="display: block; text-align: center; margin-top: 10px; background-color: #3498db; color: white; padding: 10px; text-decoration: none; border-radius: 6px; font-family: 'Fredoka One', cursive; border: 3px solid var(--border-color); box-shadow: 2px 2px 0 var(--border-color); transition: transform 0.1s;">Abrir Projetor 🎥</a>
+                <h3 style="margin-top: 15px;">Alunos (limite 6):</h3>
+                <ul class="players-list" id="players-${pin}">
+                    <li>Aguardando alunos...</li>
+                </ul>
+            `;
+            roomsContainer.prepend(card);
+            
+            const startBtn = document.getElementById(`start-btn-${pin}`);
+            startBtn.addEventListener('click', () => {
+                const players = roomPlayers[pin];
+                if (!players || players.length < 2) {
+                    alert("Precisa de pelo menos 2 alunos!");
+                    return;
+                }
+                
+                startBtn.disabled = true;
+                startBtn.textContent = 'Partida Iniciada!';
+                startBtn.style.backgroundColor = '#95a5a6';
+                
+                // Inicializa a engine e o map localmente
+                window.initGame(); // zera gameState local
+                
+                // Cadastra os players no motor
+                players.forEach((p, index) => {
+                    const color = PLAYER_COLORS[index % PLAYER_COLORS.length];
+                    gameState.players[index + 1] = {
+                        id: p.id, // O ID agora é o socket.id
+                        name: p.name,
+                        color: color,
+                        objective: null,
+                        territoriesCount: 0,
+                        totalArmies: 0,
+                        armiesNextTurn: 0,
+                        resolvedQuestions: []
+                    };
+                });
+                
+                // Sorteia tudo
+                window.startGame();
+                
+                // Emite o estado inicial pro servidor distribuir
+                socket.emit('sync_state', { pin: pin, state: window.gameState });
+                // Emite o start (para o aluno trocar de tela)
+                socket.emit('start_game', pin);
+            });
+        }
+
+        // Leitor simples de CSV
+        csvUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const text = evt.target.result;
+                const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
+                parsedQuestions = [];
+                
+                lines.forEach((line, index) => {
+                    const result = [];
+                    let startValueBnd = 0;
+                    let inQuotes = false;
+                    for (let i = 0; i < line.length; i++) {
+                        const c = line[i];
+                        if (c === '"') {
+                            inQuotes = !inQuotes;
+                        } else if (c === ',' && !inQuotes) {
+                            result.push(line.substring(startValueBnd, i));
+                            startValueBnd = i + 1;
+                        }
+                    }
+                    result.push(line.substring(startValueBnd));
+                    const cols = result.map(v => v.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
+                    
+                    if(cols.length >= 5 && cols[0] && cols[1] && cols[2] && cols[3] && cols[4]) {
+                        parsedQuestions.push({
+                            id: 'q_' + index,
+                            question: cols[0],
+                            correctAnswer: cols[1],
+                            wrongAnswers: [cols[2], cols[3], cols[4]]
+                        });
+                    }
+                });
+                
+                csvCount.textContent = `${parsedQuestions.length} questões lidas.`;
+                window.gameState.questionBank = parsedQuestions;
+                
+                // Injeta em todas as salas já abertas
+                activeRooms.forEach(pin => {
+                    socket.emit('upload_csv', { pin: pin, bank: parsedQuestions });
+                });
+            };
+            reader.readAsText(file);
+        });
+
+        // HACK: Substituir o ouvinte genérico para receber jogadores da sala certa
+        // Como o server emite update_players sem o PIN, eu modifiquei lá? Não, eu emiti:
+        // io.to(pin).emit('update_players', gameRooms[pin].players);
+        // Entao só recebo array de players. Se eu estiver ouvindo aqui, eu não sei o PIN.
+        // Vou interceptar isso injetando o PIN no update_players lá no server em breve se necessário.
+    </script>
+</body>
+</html>

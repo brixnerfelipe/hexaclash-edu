@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HexaClash Edu - Modo Projetor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #2c3e50;
+            display: flex;
+            height: 100vh;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        /* Área do Mapa (Esquerda) */
+        .map-area {
+            flex: 3;
+            background-color: #a2d5f2;
+            position: relative;
+            box-shadow: inset -5px 0 15px rgba(0,0,0,0.1);
+        }
+
+        #game-map {
+            width: 100%;
+            height: 100%;
+            /* Desativa qualquer interação do mouse no mapa */
+            pointer-events: none;
+        }
+
+        /* Painel Lateral (Direita) */
+        .sidebar {
+            flex: 1;
+            background-color: #fff9eb;
+            display: flex;
+            flex-direction: column;
+            border-left: 6px solid var(--border-color);
+            box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-header {
+            background-color: #f1c40f;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 4px solid var(--border-color);
+        }
+
+        .sidebar-header h1 {
+            margin: 0;
+            font-family: 'Fredoka One', cursive;
+            color: #333;
+            font-size: 28px;
+        }
+
+        .sidebar-header h2 {
+            margin: 5px 0 0;
+            font-size: 16px;
+            color: #555;
+        }
+
+        /* Placar */
+        .leaderboard {
+            padding: 15px;
+            border-bottom: 4px solid var(--border-color);
+            background-color: #fff;
+            max-height: 40%;
+            overflow-y: auto;
+        }
+
+        .leaderboard h3 {
+            margin: 0 0 10px;
+            font-family: 'Fredoka One', cursive;
+            color: #333;
+            text-align: center;
+        }
+
+        .player-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 8px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+
+        .player-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid var(--border-color);
+            margin-right: 10px;
+        }
+
+        .player-info {
+            flex: 1;
+            display: flex;
+            justify-content: space-between;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        /* Action Log */
+        .action-log-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            background-color: #ecf0f1;
+            overflow: hidden;
+        }
+
+        .action-log-container h3 {
+            margin: 0 0 10px;
+            font-family: 'Fredoka One', cursive;
+            color: #333;
+            text-align: center;
+        }
+
+        .action-log {
+            flex: 1;
+            overflow-y: auto;
+            background-color: #fff;
+            border: 3px solid var(--border-color);
+            border-radius: 10px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .log-entry {
+            font-size: 13px;
+            padding: 8px;
+            background-color: #fdfdfd;
+            border-left: 4px solid var(--border-color);
+            border-radius: 4px;
+            animation: fadeIn 0.3s ease-out;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .log-time {
+            font-size: 10px;
+            color: #888;
+            margin-bottom: 2px;
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .waiting-msg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Fredoka One', cursive;
+            font-size: 32px;
+            color: #333;
+            background: rgba(255,255,255,0.8);
+            padding: 20px 40px;
+            border-radius: 20px;
+            border: 4px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="map-area">
+        <div id="waiting-msg" class="waiting-msg">Aguardando início da partida...</div>
+        <svg id="game-map" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid meet" style="display: none;"></svg>
+    </div>
+
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h1>HexaClash Edu</h1>
+            <h2 id="room-pin-display">SALA: ----</h2>
+        </div>
+        
+        <div class="leaderboard">
+            <h3>Placar</h3>
+            <div id="leaderboard-content">
+                <!-- Linhas dos jogadores inseridas via JS -->
+            </div>
+        </div>
+
+        <div class="action-log-container">
+            <h3>Eventos da Partida</h3>
+            <div class="action-log" id="action-log">
+                <!-- Logs inseridos via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts do Jogo (Passivo) -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/mapData.js"></script>
+    <!-- Para o Host, precisamos de uma versão mockada do logic.js ou apenas do objeto gameState e as funções de renderização -->
+    <script>
+        // Inicializa o state global necessário pro ui.js funcionar passivamente
+        var gameState = {
+            status: 'lobby',
+            players: {},
+            territories: [],
+            turn: 1,
+            currentPlayerIndex: 0,
+            draftArmies: 0,
+            questionBank: [],
+            actionLogs: []
+        };
+    </script>
+    <!-- ui.js usa getCurrentPlayerId() e outras funções do logic, então é melhor importarmos o logic inteiro para evitar erros de undefined -->
+    <script src="js/logic.js"></script>
+    <script src="js/ui.js"></script>
+
+    <!-- Script Principal do Projetor -->
+    <script>
+        const socket = io();
+        
+        // Extrai o PIN da URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const pin = urlParams.get('pin');
+        
+        const waitingMsg = document.getElementById('waiting-msg');
+        const gameMap = document.getElementById('game-map');
+        const pinDisplay = document.getElementById('room-pin-display');
+        const leaderboardContent = document.getElementById('leaderboard-content');
+        const actionLog = document.getElementById('action-log');
+        
+        if (pin) {
+            pinDisplay.textContent = `SALA: ${pin}`;
+            socket.emit('host_join', pin);
+        } else {
+            pinDisplay.textContent = `ERRO: PIN INVÁLIDO`;
+            waitingMsg.textContent = "URL Inválida. Faltou o ?pin=";
+        }
+
+        socket.on('room_error', (msg) => {
+            waitingMsg.textContent = msg;
+        });
+
+        socket.on('room_closed', (msg) => {
+            waitingMsg.textContent = msg;
+            gameMap.style.display = 'none';
+            waitingMsg.style.display = 'block';
+        });
+
+        // O Motor Passivo: Ouve o estado e desenha
+        socket.on('sync_state', (state) => {
+            if (!state || !state.territories) return;
+            
+            // Oculta a mensagem de espera se o jogo começou
+            if (state.status !== 'lobby') {
+                waitingMsg.style.display = 'none';
+                gameMap.style.display = 'block';
+            }
+
+            // Atualiza o state local
+            gameState = state;
+
+            // Renderiza o SVG passivamente
+            renderMap();
+
+            // Atualiza o Placar
+            updateLeaderboard();
+
+            // Atualiza os Logs
+            updateActionLog();
+        });
+
+        function updateLeaderboard() {
+            leaderboardContent.innerHTML = '';
+            
+            const pIds = Object.keys(gameState.players);
+            if (pIds.length === 0) {
+                leaderboardContent.innerHTML = '<div style="text-align: center; color: #777;">Nenhum jogador</div>';
+                return;
+            }
+
+            // Ordena os jogadores por total de territórios (decrescente)
+            pIds.sort((a, b) => gameState.players[b].territoriesCount - gameState.players[a].territoriesCount);
+
+            pIds.forEach(pId => {
+                const p = gameState.players[pId];
+                const row = document.createElement('div');
+                row.className = 'player-row';
+                
+                // Destaque se for o turno dele
+                const currentPlayerId = Object.keys(gameState.players).map(Number)[gameState.currentPlayerIndex];
+                if (p.id === currentPlayerId && gameState.status !== 'GAMEOVER') {
+                    row.style.borderColor = p.color;
+                    row.style.boxShadow = `0 0 5px ${p.color}`;
+                }
+
+                row.innerHTML = `
+                    <div class="player-color" style="background-color: ${p.color};"></div>
+                    <div class="player-info">
+                        <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.name}</span>
+                        <span style="margin-left: 10px;" title="Territórios">🏰 ${p.territoriesCount}</span>
+                        <span style="margin-left: 10px;" title="Exércitos">🗡️ ${p.totalArmies}</span>
+                    </div>
+                `;
+                leaderboardContent.appendChild(row);
+            });
+        }
+
+        let lastLogCount = 0;
+        function updateActionLog() {
+            if (!gameState.actionLogs) return;
+            
+            // Renderiza apenas se houver novos logs (ou se recomeçar)
+            if (gameState.actionLogs.length !== lastLogCount) {
+                actionLog.innerHTML = '';
+                
+                gameState.actionLogs.forEach(log => {
+                    const entry = document.createElement('div');
+                    entry.className = 'log-entry';
+                    
+                    // Identifica o tipo de ação pela mensagem para pintar a borda
+                    if (log.message.includes('atacou')) entry.style.borderLeftColor = '#e74c3c';
+                    else if (log.message.includes('recebeu')) entry.style.borderLeftColor = '#3498db';
+                    else if (log.message.includes('VITÓRIA')) entry.style.borderLeftColor = '#f1c40f';
+                    else if (log.message.includes('falhou')) entry.style.borderLeftColor = '#95a5a6';
+
+                    entry.innerHTML = `<span class="log-time">${log.time}</span>${log.message}`;
+                    actionLog.appendChild(entry);
+                });
+
+                // Auto-scroll para o final
+                actionLog.scrollTop = actionLog.scrollHeight;
+                lastLogCount = gameState.actionLogs.length;
+            }
+        }
+    </script>
+</body>
+</html>

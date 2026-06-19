@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HexaClash Edu - Modo Projetor</title>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <style>
         body {
@@ -13,7 +13,7 @@
             background-color: #2c3e50;
             display: flex;
             height: 100vh;
-            font-family: 'Nunito', sans-serif;
+            font-family: 'Poppins', sans-serif;
         }
 
         /* Área do Mapa (Esquerda) */
@@ -34,7 +34,7 @@
         /* Painel Lateral (Direita) */
         .sidebar {
             flex: 1;
-            background-color: #fff9eb;
+            background-color: var(--panel-bg);
             display: flex;
             flex-direction: column;
             border-left: 6px solid var(--border-color);
@@ -42,7 +42,7 @@
         }
 
         .sidebar-header {
-            background-color: #f1c40f;
+            background-color: var(--panel-bg);
             padding: 20px;
             text-align: center;
             border-bottom: 4px solid var(--border-color);
@@ -50,7 +50,7 @@
 
         .sidebar-header h1 {
             margin: 0;
-            font-family: 'Fredoka One', cursive;
+            font-family: 'Poppins', sans-serif;
             color: #333;
             font-size: 28px;
         }
@@ -59,6 +59,7 @@
             margin: 5px 0 0;
             font-size: 16px;
             color: #555;
+            font-weight: bold;
         }
 
         /* Placar */
@@ -72,7 +73,7 @@
 
         .leaderboard h3 {
             margin: 0 0 10px;
-            font-family: 'Fredoka One', cursive;
+            font-family: 'Outfit', sans-serif;
             color: #333;
             text-align: center;
         }
@@ -115,7 +116,7 @@
 
         .action-log-container h3 {
             margin: 0 0 10px;
-            font-family: 'Fredoka One', cursive;
+            font-family: 'Poppins', sans-serif;
             color: #333;
             text-align: center;
         }
@@ -159,7 +160,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-family: 'Fredoka One', cursive;
+            font-family: 'Poppins', sans-serif;
             font-size: 32px;
             color: #333;
             background: rgba(255,255,255,0.8);
@@ -178,7 +179,7 @@
 
     <div class="sidebar">
         <div class="sidebar-header">
-            <h1>HexaClash Edu</h1>
+            <img src="img/logo.png" alt="WAR edu" style="width: 180px;">
             <h2 id="room-pin-display">SALA: ----</h2>
         </div>
         

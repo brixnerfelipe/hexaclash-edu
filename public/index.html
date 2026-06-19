@@ -4,20 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HexaClash Edu - Aluno</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #2c3e50;
-            color: white;
+            font-family: 'Poppins', sans-serif;
+            background-color: #c19a6b;
+            color: #000;
             margin: 0;
-            text-align: center;
+            text-align: left;
         }
         .container {
-            background-color: #34495e;
+            background-color: #f4eadc;
             padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-            max-width: 400px;
+            border-radius: 20px;
+            border: 4px solid #4a3424;
+            max-width: 350px;
             width: 90%;
             
             /* Centraliza a própria .container no meio da tela se estiver sozinha */
@@ -26,34 +28,53 @@
             left: 50%;
             transform: translate(-50%, -50%);
         }
-        h1 {
-            color: #f1c40f;
-            margin-top: 0;
+        .logo-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo-container img {
+            width: 200px;
+        }
+        .input-label {
+            display: block;
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 5px;
+            margin-top: 15px;
+            color: #000;
         }
         input {
             width: 100%;
-            padding: 15px;
-            margin: 10px 0;
-            border: none;
-            border-radius: 5px;
+            padding: 12px;
+            margin: 5px 0 15px 0;
+            border: 2px solid #8a6d54;
+            border-radius: 20px;
+            background-color: #f4eadc;
             font-size: 18px;
             box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            outline: none;
+        }
+        input:focus {
+            border-color: #694931;
         }
         button {
             width: 100%;
             padding: 15px;
-            margin-top: 20px;
-            background-color: #2ecc71;
+            margin-top: 10px;
+            background-color: #694931;
             color: white;
             border: none;
-            border-radius: 5px;
-            font-size: 20px;
-            font-weight: bold;
+            border-radius: 20px;
+            font-size: 28px;
+            font-weight: 800;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: transform 0.2s;
+            font-family: 'Poppins', sans-serif;
         }
         button:hover {
-            background-color: #27ae60;
+            transform: scale(1.02);
         }
         .error {
             color: #e74c3c;
@@ -79,20 +100,27 @@
 <body>
 
     <div class="container" id="login-screen">
-        <h1>HexaClash Edu</h1>
-        <p>Digite o PIN da sala para entrar na batalha!</p>
+        <div class="logo-container">
+            <img src="img/logo.png" alt="WAR edu logo" onerror="this.src=''; this.alt='WAR edu';">
+        </div>
         
-        <input type="text" id="pin-input" placeholder="PIN da Sala (ex: 1234)" maxlength="4">
-        <input type="text" id="name-input" placeholder="Seu Nome (ex: João Silva)" maxlength="15">
+        <label for="pin-input" class="input-label">Pin da sala</label>
+        <input type="text" id="pin-input" maxlength="4">
+        
+        <label for="name-input" class="input-label">Nome do jogador</label>
+        <input type="text" id="name-input" maxlength="15">
         
         <button id="join-btn">ENTRAR</button>
         <div id="error-msg" class="error"></div>
     </div>
 
-    <div class="container" id="waiting-screen">
-        <h1>Conectado!</h1>
-        <p id="player-welcome"></p>
-        <div class="spinner"></div>
+    <div class="container" id="waiting-screen" style="text-align: center;">
+        <div class="logo-container">
+            <img src="img/logo.png" alt="WAR edu logo" onerror="this.src=''; this.alt='WAR edu';">
+        </div>
+        <h1 style="color: #694931;">Conectado!</h1>
+        <p id="player-welcome" style="font-weight: bold; font-size: 18px;"></p>
+        <div class="spinner" style="border-top-color: #694931;"></div>
         <p>Aguardando o professor iniciar a partida...</p>
     </div>
 
@@ -146,9 +174,9 @@
         <div class="app-container">
         <!-- Dashboard do Professor / Jogador -->
         <aside class="dashboard">
-            <div class="dashboard-header">
-                <h1>HexaClash Edu</h1>
-                <p id="dashboard-subtitle">Painel do Professor</p>
+            <div class="dashboard-header" style="text-align: center; margin-bottom: 20px;">
+                <img src="img/logo.png" alt="WAR edu" style="width: 150px;">
+                <p id="dashboard-subtitle" style="font-weight: bold; margin-top: 5px;">Painel do Professor</p>
             </div>
             
             <div class="controls" id="lobby-controls">

@@ -1,9 +1,9 @@
 :root {
-    --bg-color: #fdf6e3;
-    --panel-bg: #fff;
-    --text-color: #333;
-    --border-color: #4a4a4a;
-    --shadow-color: #00000033;
+    --bg-color: #c19a6b;
+    --panel-bg: #f4eadc;
+    --text-color: #000;
+    --border-color: #4a3424;
+    --shadow-color: transparent;
 }
 
 * {
@@ -13,7 +13,7 @@
 }
 
 body {
-    font-family: 'Fredoka One', cursive, sans-serif;
+    font-family: 'Poppins', sans-serif;
     background-color: var(--bg-color);
     background-image: radial-gradient(#e0d7c3 20%, transparent 20%);
     background-size: 20px 20px;

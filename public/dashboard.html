@@ -4,108 +4,290 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HexaClash Edu - Dashboard do Professor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Outfit:wght@800;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #ecf0f1;
-            color: #333;
+            font-family: 'Poppins', sans-serif;
+            background-color: #c19a6b;
+            color: #000;
             margin: 0;
             padding: 20px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            box-sizing: border-box;
         }
         .header {
-            background-color: #34495e;
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .controls {
             display: flex;
-            gap: 20px;
-            margin-bottom: 30px;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            background-color: transparent;
         }
-        .card {
-            background: white;
+        .header img {
+            width: 180px;
+        }
+        .header h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 40px;
+            font-weight: 900;
+            color: #000;
+            margin: 0;
+            text-transform: uppercase;
+        }
+        .dashboard-layout {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            min-height: 0; /* allows children to scroll */
+        }
+        
+        /* LEFT PANEL */
+        .left-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 350px;
+        }
+        
+        .panel-box {
+            background-color: #f4eadc;
+            border: 4px solid #4a3424;
+            border-radius: 20px;
             padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .panel-box h3 {
+            margin-top: 0;
+            color: #4a3424;
+            font-weight: 800;
+            font-size: 22px;
+        }
+        
+        #room-tabs-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .room-tab {
+            background-color: #c19a6b;
+            border: 3px solid #4a3424;
+            border-radius: 25px;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 32px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 900;
+            color: #a72e25;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .room-tab:hover {
+            transform: scale(1.02);
+        }
+        .room-tab.active {
+            border-color: #f4eadc;
+            box-shadow: 0 0 0 3px #a72e25;
+        }
+        .room-tab i {
+            color: white;
+            font-size: 24px;
+        }
+        
+        .csv-upload-btn {
+            background-color: #c19a6b;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            display: inline-block;
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .csv-desc {
+            font-size: 12px;
+            color: #4a3424;
+            margin: 0;
+            line-height: 1.2;
+        }
+        
+        /* RIGHT PANEL */
+        .right-panel {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            background-color: #f4eadc;
+            border: 4px solid #4a3424;
+            border-radius: 20px;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .create-room-wrapper {
+            text-align: center;
+            margin-top: auto;
+            padding-top: 20px;
+        }
+        
+        #create-room-btn {
+            background-color: #a72e25;
+            color: white;
+            border: 4px solid #694931;
+            border-radius: 30px;
+            padding: 15px 40px;
+            font-size: 24px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: transform 0.2s;
+            font-family: 'Poppins', sans-serif;
+        }
+        #create-room-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        /* ROOM CARD (Right Panel Content) */
+        #rooms-container {
             flex: 1;
         }
-        button {
-            padding: 15px 25px;
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        button:hover { background-color: #2980b9; }
-        .btn-create { background-color: #2ecc71; width: 100%; }
-        .btn-create:hover { background-color: #27ae60; }
         
         .room-card {
-            background: #fff;
-            border-left: 5px solid #f1c40f;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: none; /* hidden by default, shown when active */
+            height: 100%;
+            flex-direction: column;
+        }
+        .room-card.active {
+            display: flex;
+        }
+        
+        .room-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 20px;
         }
-        .room-pin {
-            font-size: 48px;
-            font-weight: bold;
-            color: #2c3e50;
+        
+        .room-pin-display {
+            font-family: 'Outfit', sans-serif;
+            font-size: 60px;
+            font-weight: 900;
+            color: #a72e25;
             margin: 0;
-            letter-spacing: 5px;
+            display: flex;
+            align-items: center;
         }
+        .room-pin-display span {
+            font-size: 30px;
+            color: #694931;
+            margin-right: 10px;
+        }
+        
+        .room-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .btn-start-game, .btn-projector {
+            background-color: #694931;
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 10px 30px;
+            font-size: 20px;
+            font-weight: 800;
+            font-family: 'Poppins', sans-serif;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+        }
+        .btn-start-game:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        
+        .players-section h3 {
+            color: #694931;
+            margin: 0 0 10px 0;
+            font-size: 20px;
+        }
+        
         .players-list {
             list-style: none;
-            padding: 0;
-            margin-top: 15px;
-        }
-        .players-list li {
-            background: #ecf0f1;
             padding: 10px;
-            margin-bottom: 5px;
-            border-radius: 5px;
+            margin: 0;
+            background: white;
+            border: 3px solid #8a6d54;
+            border-radius: 15px;
+            flex: 1;
+            overflow-y: auto;
+            min-height: 150px;
+        }
+        
+        .players-list li {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
             font-weight: bold;
+            color: #4a3424;
         }
-        .btn-host {
-            background-color: #9b59b6;
-            margin-top: 15px;
-            text-decoration: none;
-            display: inline-block;
-            color: white;
+        .players-list li:last-child {
+            border-bottom: none;
         }
-        .btn-host:hover { background-color: #8e44ad; }
+        .player-status {
+            color: #888;
+            font-weight: normal;
+        }
+        
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>Centro de Comando do Professor</h1>
+        <div class="logo-container">
+            <img src="img/logo.png" alt="WAR edu logo" onerror="this.src=''; this.alt='WAR edu';">
+        </div>
+        <h1>Central de Comando</h1>
     </div>
 
-    <div class="controls">
-        <div class="card">
-            <h2>Gerenciar Salas</h2>
-            <button id="create-room-btn" class="btn-create">Criar Nova Sala</button>
+    <div class="dashboard-layout">
+        <!-- PAINEL ESQUERDO -->
+        <div class="left-panel">
+            <div class="panel-box">
+                <h3>MINHAS SALAS</h3>
+                <div id="room-tabs-container">
+                    <!-- Tabs inseridas via JS -->
+                </div>
+            </div>
+            
+            <div class="panel-box">
+                <h3 id="csv-count">0 PERGUNTAS VÁLIDAS</h3>
+                <label for="csv-upload" class="csv-upload-btn">Carregar novo .csv</label>
+                <input type="file" id="csv-upload" accept=".csv" style="display: none;">
+                <p class="csv-desc">Col.1: Pergunta; Col.2: alternativa correta;<br>Col. 3,4 e 5: alternativas erradas</p>
+            </div>
         </div>
-        
-        <div class="card">
-            <h2>Banco de Questões (Opcional por enquanto)</h2>
-            <p>Carregue o CSV aqui para injetar nas salas abertas.</p>
-            <input type="file" id="csv-upload" accept=".csv">
-            <p id="csv-count">Nenhum arquivo lido ainda.</p>
-        </div>
-    </div>
 
-    <div id="rooms-container">
-        <!-- Cards das salas renderizados aqui -->
+        <!-- PAINEL DIREITO -->
+        <div class="right-panel">
+            <div id="rooms-container">
+                <!-- Cards das salas (detalhes) renderizados aqui -->
+            </div>
+            
+            <div class="create-room-wrapper">
+                <button id="create-room-btn">Criar nova sala</button>
+            </div>
+        </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -141,14 +323,16 @@
         socket.on('update_players', (data) => {
             roomPlayers[data.pin] = data.players;
             const list = document.getElementById(`players-${data.pin}`);
+            const isStarted = document.getElementById(`start-btn-${data.pin}`) && document.getElementById(`start-btn-${data.pin}`).disabled;
+            
             if (list) {
                 if (data.players.length === 0) {
-                    list.innerHTML = `<li>Aguardando alunos...</li>`;
+                    list.innerHTML = `<li>Aguardando alunos... <span class="player-status">--</span></li>`;
                 } else {
                     list.innerHTML = '';
                     data.players.forEach(p => {
                         const li = document.createElement('li');
-                        li.textContent = p.name;
+                        li.innerHTML = `<span>${p.name.toUpperCase()}</span> <span class="player-status">${isStarted ? 'JOGANDO' : 'ESPERANDO INÍCIO'}</span>`;
                         list.appendChild(li);
                     });
                 }
@@ -160,23 +344,60 @@
             location.reload();
         });
 
+        function selectRoom(pin) {
+            // Remove active de todas as abas e cards
+            document.querySelectorAll('.room-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.room-card').forEach(c => c.classList.remove('active'));
+            
+            // Adiciona active no clicado
+            const tab = document.getElementById(`tab-${pin}`);
+            const card = document.getElementById(`room-${pin}`);
+            
+            if (tab) tab.classList.add('active');
+            if (card) card.classList.add('active');
+        }
+
         function renderRoomCard(pin) {
+            // 1. Cria a aba na lista da esquerda
+            const tabContainer = document.getElementById('room-tabs-container');
+            const tab = document.createElement('div');
+            tab.className = 'room-tab';
+            tab.id = `tab-${pin}`;
+            tab.innerHTML = `
+                <span>${pin}</span>
+                <i class="fa-regular fa-clock" id="icon-${pin}"></i>
+            `;
+            tab.addEventListener('click', () => selectRoom(pin));
+            tabContainer.prepend(tab);
+
+            // 2. Cria o card de detalhes na direita
             const card = document.createElement('div');
             card.className = 'room-card';
             card.id = `room-${pin}`;
             card.innerHTML = `
-                <h2>SALA ABERTA</h2>
-                <p class="room-pin">${pin}</p>
-                <button class="btn-start-game" id="start-btn-${pin}" style="background-color: #e67e22; margin-top: 15px; width: 100%;">Iniciar Partida</button>
-                <a href="host.html?pin=${pin}" target="_blank" style="display: block; text-align: center; margin-top: 10px; background-color: #3498db; color: white; padding: 10px; text-decoration: none; border-radius: 6px; font-family: 'Fredoka One', cursive; border: 3px solid var(--border-color); box-shadow: 2px 2px 0 var(--border-color); transition: transform 0.1s;">Abrir Projetor 🎥</a>
-                <h3 style="margin-top: 15px;">Alunos (limite 6):</h3>
-                <ul class="players-list" id="players-${pin}">
-                    <li>Aguardando alunos...</li>
-                </ul>
+                <div class="room-header">
+                    <p class="room-pin-display"><span>PIN:</span> ${pin}</p>
+                    <div class="room-actions">
+                        <button class="btn-start-game" id="start-btn-${pin}">Iniciar</button>
+                        <a href="host.html?pin=${pin}" target="_blank" class="btn-projector">Projetar</a>
+                    </div>
+                </div>
+                
+                <div class="players-section">
+                    <h3>JOGADORES (6 MÁX):</h3>
+                    <ul class="players-list" id="players-${pin}">
+                        <li>Aguardando alunos... <span class="player-status">--</span></li>
+                    </ul>
+                </div>
             `;
-            roomsContainer.prepend(card);
+            roomsContainer.appendChild(card);
+            
+            // Auto-seleciona a sala recém criada
+            selectRoom(pin);
             
             const startBtn = document.getElementById(`start-btn-${pin}`);
+            const icon = document.getElementById(`icon-${pin}`);
+            
             startBtn.addEventListener('click', () => {
                 const players = roomPlayers[pin];
                 if (!players || players.length < 2) {
@@ -187,6 +408,18 @@
                 startBtn.disabled = true;
                 startBtn.textContent = 'Partida Iniciada!';
                 startBtn.style.backgroundColor = '#95a5a6';
+                
+                // Muda ícone da aba
+                if(icon) {
+                    icon.className = 'fa-solid fa-play';
+                }
+                
+                // Atualiza status dos alunos na lista
+                const list = document.getElementById(`players-${pin}`);
+                if (list) {
+                    const statusSpans = list.querySelectorAll('.player-status');
+                    statusSpans.forEach(span => span.textContent = 'JOGANDO');
+                }
                 
                 // Inicializa a engine e o map localmente
                 window.initGame(); // zera gameState local

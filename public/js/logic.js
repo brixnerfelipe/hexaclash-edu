@@ -97,43 +97,55 @@ function redistributeMap(playerIds) {
 
 function assignDynamicObjectives(playerIds) {
     const totalPlayers = playerIds.length;
-    const tTarget = Math.floor(42 / totalPlayers) + Math.floor(42 * 0.3);
+    const is2P = totalPlayers === 2;
+    
+    const impTarget = is2P ? 32 : Math.min(26, Math.floor(42 / totalPlayers) + Math.floor(42 * 0.3));
+    const stratTarget = is2P ? 24 : Math.min(18, Math.floor(42 / totalPlayers) + 6);
     
     const geopoliticCombos = [
-        ['Gamma', 'Zeta'],
-        ['Epsilon', 'Delta'],
-        ['Beta', 'Alpha']
+        ['Gamma', 'Epsilon'],
+        ['Delta', 'Zeta'],
+        ['Beta', 'Zeta'],
+        ['Alpha', 'Zeta']
     ];
     
     playerIds.forEach(pId => {
         const p = gameState.players[pId];
-        const objType = Math.floor(Math.random() * 4); // 0, 1, 2, 3
         
-        if (objType === 0) {
+        if (is2P) {
             p.objective = { 
                 type: 'IMPERIALIST', 
-                target: tTarget,
-                description: `O Imperialista: Conquistar e manter ${tTarget} territórios.` 
-            };
-        } else if (objType === 1) {
-            const combo = geopoliticCombos[Math.floor(Math.random() * geopoliticCombos.length)];
-            p.objective = { 
-                type: 'GEOPOLITIC', 
-                regions: combo,
-                description: `O Geopolítico: Ocupar 100% das regiões ${combo[0]} e ${combo[1]}.` 
-            };
-        } else if (objType === 2) {
-            const stratTarget = Math.max(1, tTarget - 4);
-            p.objective = { 
-                type: 'STRATEGIST', 
-                target: stratTarget,
-                description: `O Estrategista: Dominar ${stratTarget} territórios e manter no mínimo 2 exércitos em cada um deles.` 
+                target: impTarget,
+                description: `O Supremo: Conquistar e manter ${impTarget} territórios.` 
             };
         } else {
-            p.objective = { 
-                type: 'GLOBALIST', 
-                description: `O Globalista: Ter presença em todas as 6 regiões do mapa e dominar uma delas inteiramente.` 
-            };
+            const objType = Math.floor(Math.random() * 4); // 0, 1, 2, 3
+            
+            if (objType === 0) {
+                p.objective = { 
+                    type: 'IMPERIALIST', 
+                    target: impTarget,
+                    description: `O Imperialista: Conquistar e manter ${impTarget} territórios.` 
+                };
+            } else if (objType === 1) {
+                const combo = geopoliticCombos[Math.floor(Math.random() * geopoliticCombos.length)];
+                p.objective = { 
+                    type: 'GEOPOLITIC', 
+                    regions: combo,
+                    description: `O Geopolítico: Ocupar 100% das regiões ${combo[0]} e ${combo[1]}.` 
+                };
+            } else if (objType === 2) {
+                p.objective = { 
+                    type: 'STRATEGIST', 
+                    target: stratTarget,
+                    description: `O Estrategista: Dominar ${stratTarget} territórios e manter no mínimo 2 exércitos em cada um deles.` 
+                };
+            } else {
+                p.objective = { 
+                    type: 'GLOBALIST', 
+                    description: `O Globalista: Ter presença em todas as 6 regiões do mapa e dominar DUAS delas inteiramente.` 
+                };
+            }
         }
     });
 }
@@ -286,13 +298,14 @@ function checkWinCondition(playerId) {
         const regionsSet = new Set(playerTerritories.map(t => t.region));
         if (regionsSet.size < 6) return false;
         
-        // E dominar 1 inteira
+        // E dominar 2 inteiras
+        let dominatedCount = 0;
         for (const region of REGIONS) {
             const regionTerritories = gameState.territories.filter(t => t.region === region.name);
             const ownsAll = regionTerritories.every(t => t.owner === playerId);
-            if (ownsAll) return true;
+            if (ownsAll) dominatedCount++;
         }
-        return false;
+        return dominatedCount >= 2;
     }
     
     return false;

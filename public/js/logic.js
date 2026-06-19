@@ -476,6 +476,7 @@ function applyCombatResults(originId, targetId, attackLosses, defenseLosses, mov
     // Juiz verifica expansão após combate
     if (targetConquered && checkWinCondition(origin.owner)) {
         gameState.status = 'GAMEOVER';
+        gameState.winnerId = origin.owner;
         if (window.showVictoryScreen) window.showVictoryScreen(origin.owner);
     }
     

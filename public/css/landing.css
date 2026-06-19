@@ -36,7 +36,8 @@ h1, h2, h3 {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 50px;
+    padding: 0 50px;
+    height: 90px;
     background-color: var(--card-bg);
     border-bottom: 4px solid var(--border-color);
     position: sticky;

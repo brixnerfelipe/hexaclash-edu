@@ -33,20 +33,19 @@ function renderMap() {
     let mapSvg = document.getElementById('game-map');
     if (!mapSvg) return;
 
-    let mapEl = document.getElementById('map-contents');
-    if (!mapEl) {
-        mapEl = document.createElementNS(SVG_NS, "g");
-        mapEl.setAttribute("id", "map-contents");
-        mapSvg.appendChild(mapEl);
+    let mapLayer = document.getElementById('map-layer');
+    if (!mapLayer) {
+        mapLayer = document.createElementNS(SVG_NS, "g");
+        mapLayer.setAttribute("id", "map-layer");
+        mapSvg.appendChild(mapLayer);
     }
-    mapEl.innerHTML = ''; 
+    mapLayer.innerHTML = ''; 
     
     // Init pan-zoom se estiver no mobile e ainda n estiver instanciado
     if (window.innerWidth <= 768 && !window.panZoomInstance && typeof svgPanZoom !== 'undefined') {
         setTimeout(() => {
             try {
                 window.panZoomInstance = svgPanZoom('#game-map', {
-                    viewportSelector: '.svg-pan-zoom_viewport',
                     panEnabled: true,
                     controlIconsEnabled: false,
                     zoomEnabled: true,

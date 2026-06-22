@@ -356,6 +356,22 @@
             }
         });
 
+        socket.on('game_already_started', (pin) => {
+            const startBtn = document.getElementById(`start-btn-${pin}`);
+            if (startBtn) {
+                startBtn.disabled = true;
+                startBtn.textContent = 'Partida em Andamento';
+                startBtn.style.backgroundColor = '#95a5a6';
+                startBtn.style.cursor = 'not-allowed';
+            }
+            
+            const list = document.getElementById(`players-${pin}`);
+            if (list) {
+                const statuses = list.querySelectorAll('.player-status');
+                statuses.forEach(s => s.textContent = 'JOGANDO');
+            }
+        });
+
         socket.on('room_closed', (msg) => {
             alert(msg);
             location.reload();

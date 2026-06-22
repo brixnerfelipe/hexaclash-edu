@@ -79,6 +79,9 @@ io.on('connection', (socket) => {
             socket.join(pin);
             socket.emit('room_created', pin);
             socket.emit('update_players', { pin: pin, players: room.players });
+            if (room.gameState && room.gameState.status && room.gameState.status !== 'lobby') {
+                socket.emit('game_already_started', pin);
+            }
             console.log(`[Host] Professor reconectado na sala ${pin}.`);
         }
     });

@@ -43,18 +43,20 @@ function renderMap() {
     
     // Init pan-zoom se estiver no mobile e ainda n estiver instanciado
     if (window.innerWidth <= 768 && !window.panZoomInstance && typeof svgPanZoom !== 'undefined') {
-        try {
-            window.panZoomInstance = svgPanZoom('#game-map', {
-                zoomEnabled: true,
-                controlIconsEnabled: false,
-                fit: true,
-                center: true,
-                minZoom: 0.5,
-                maxZoom: 5
-            });
-        } catch (e) {
-            console.error("Erro ao inicializar svgPanZoom:", e);
-        }
+        setTimeout(() => {
+            try {
+                window.panZoomInstance = svgPanZoom('#game-map', {
+                    zoomEnabled: true,
+                    controlIconsEnabled: false,
+                    fit: true,
+                    center: true,
+                    minZoom: 0.5,
+                    maxZoom: 5
+                });
+            } catch (e) {
+                console.error("Erro ao inicializar svgPanZoom:", e);
+            }
+        }, 100);
     }
     
     const offsetX = 180;

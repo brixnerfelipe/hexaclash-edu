@@ -413,6 +413,7 @@
                     <div class="room-actions">
                         <button class="btn-start-game" id="start-btn-${pin}">Iniciar</button>
                         <a href="host.html?pin=${pin}" target="_blank" class="btn-projector">Projetar</a>
+                        <button class="btn-secondary" id="close-btn-${pin}" style="background-color: #e74c3c; color: white; border: none; margin-left: 10px;">Encerrar Sala</button>
                     </div>
                 </div>
                 
@@ -429,7 +430,14 @@
             selectRoom(pin);
             
             const startBtn = document.getElementById(`start-btn-${pin}`);
+            const closeBtn = document.getElementById(`close-btn-${pin}`);
             const icon = document.getElementById(`icon-${pin}`);
+            
+            closeBtn.addEventListener('click', () => {
+                if(confirm("Tem certeza que deseja encerrar esta sala permanentemente?")) {
+                    socket.emit('close_room', { pin, hostToken });
+                }
+            });
             
             startBtn.addEventListener('click', () => {
                 const players = roomPlayers[pin];

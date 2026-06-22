@@ -41,6 +41,16 @@ io.on('connection', (socket) => {
         socket.emit('room_created', pin);
         console.log(`[Dashboard] Sala ${pin} criada. Host: ${socket.id}`);
     });
+
+    socket.on('close_room', (data) => {
+        const { pin, hostToken } = data;
+        const room = gameRooms[pin];
+        if (room && room.hostToken === hostToken) {
+            console.log(`[Host] Professor encerrou manualmente a sala ${pin}.`);
+            io.to(pin).emit('room_closed', 'O professor encerrou a sala permanentemente.');
+            delete gameRooms[pin];
+        }
+    });
     
     socket.on('upload_csv', (data) => {
         const { pin, bank } = data;

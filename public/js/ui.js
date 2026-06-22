@@ -30,20 +30,31 @@ function getRegionColor(regionName) {
 }
 
 function renderMap() {
-    const mapEl = document.getElementById('map-contents');
-    if (!mapEl) return;
+    let mapSvg = document.getElementById('game-map');
+    if (!mapSvg) return;
+
+    let mapEl = document.getElementById('map-contents');
+    if (!mapEl) {
+        mapEl = document.createElementNS(SVG_NS, "g");
+        mapEl.setAttribute("id", "map-contents");
+        mapSvg.appendChild(mapEl);
+    }
     mapEl.innerHTML = ''; 
     
     // Init pan-zoom se estiver no mobile e ainda n estiver instanciado
     if (window.innerWidth <= 768 && !window.panZoomInstance && typeof svgPanZoom !== 'undefined') {
-        window.panZoomInstance = svgPanZoom('#game-map', {
-            zoomEnabled: true,
-            controlIconsEnabled: false,
-            fit: true,
-            center: true,
-            minZoom: 0.5,
-            maxZoom: 5
-        });
+        try {
+            window.panZoomInstance = svgPanZoom('#game-map', {
+                zoomEnabled: true,
+                controlIconsEnabled: false,
+                fit: true,
+                center: true,
+                minZoom: 0.5,
+                maxZoom: 5
+            });
+        } catch (e) {
+            console.error("Erro ao inicializar svgPanZoom:", e);
+        }
     }
     
     const offsetX = 180;
@@ -247,42 +258,48 @@ function updateDashboard() {
     const mobileBtnConfirmDraft = document.getElementById('mobile-btn-confirm-draft');
     
     if (gameState.status !== 'lobby') {
-        const isMyTurn = (typeof window.socket !== 'undefined' && window.socket.id === gameState.players[currentPlayerId].id);
+        const isMyTurn = (typeof window.socket !== 'undefined' && currentPlayerId && gameState.players[currentPlayerId] && window.socket.id === gameState.players[currentPlayerId].id);
         
         if (mobileBottomPanel) {
             mobileBottomPanel.style.display = 'flex';
-            mobileTurnBadge.style.display = isMyTurn ? 'block' : 'none';
+            if (mobileTurnBadge) mobileTurnBadge.style.display = isMyTurn ? 'block' : 'none';
             
             if (window.socket) {
                 const me = Object.values(gameState.players).find(p => p.id === window.socket.id);
                 if (me) {
-                    document.getElementById('mobile-color-swatch').style.backgroundColor = me.color;
-                    document.getElementById('mobile-player-name').textContent = me.name;
-                    document.getElementById('mobile-stat-terr').textContent = `Territórios: ${me.territoriesCount}`;
-                    document.getElementById('mobile-stat-armies').textContent = `Exércitos no Mapa: ${me.totalArmies}`;
-                    document.getElementById('mobile-stat-bonus').textContent = `Ganhos Base/Bônus: +${me.armiesNextTurn}`;
-                    document.getElementById('mobile-player-objective').textContent = me.objective ? me.objective.description : 'Objetivo Oculto';
+                    const swatch = document.getElementById('mobile-color-swatch');
+                    if (swatch) swatch.style.backgroundColor = me.color;
+                    const nameEl = document.getElementById('mobile-player-name');
+                    if (nameEl) nameEl.textContent = me.name;
+                    const terrEl = document.getElementById('mobile-stat-terr');
+                    if (terrEl) terrEl.textContent = `Territórios: ${me.territoriesCount}`;
+                    const armiesEl = document.getElementById('mobile-stat-armies');
+                    if (armiesEl) armiesEl.textContent = `Exércitos no Mapa: ${me.totalArmies}`;
+                    const bonusEl = document.getElementById('mobile-stat-bonus');
+                    if (bonusEl) bonusEl.textContent = `Ganhos Base/Bônus: +${me.armiesNextTurn}`;
+                    const objEl = document.getElementById('mobile-player-objective');
+                    if (objEl) objEl.textContent = me.objective ? me.objective.description : 'Objetivo Oculto';
                 }
             }
 
             if (gameState.status === 'DRAFT' && isMyTurn) {
-                mobileDraftBox.style.display = 'block';
-                mobileAttackBox.style.display = 'none';
-                mobileDraftText.textContent = `Exércitos para distribuir: ${gameState.draftArmies}`;
+                if (mobileDraftBox) mobileDraftBox.style.display = 'block';
+                if (mobileAttackBox) mobileAttackBox.style.display = 'none';
+                if (mobileDraftText) mobileDraftText.textContent = `Exércitos para distribuir: ${gameState.draftArmies}`;
                 
                 if (gameState.draftArmies === 0) {
-                    mobileBtnConfirmDraft.style.display = 'block';
-                    mobileDraftBox.style.backgroundColor = '#2ecc71'; 
+                    if (mobileBtnConfirmDraft) mobileBtnConfirmDraft.style.display = 'block';
+                    if (mobileDraftBox) mobileDraftBox.style.backgroundColor = '#2ecc71'; 
                 } else {
-                    mobileBtnConfirmDraft.style.display = 'none';
-                    mobileDraftBox.style.backgroundColor = '#f1c40f'; 
+                    if (mobileBtnConfirmDraft) mobileBtnConfirmDraft.style.display = 'none';
+                    if (mobileDraftBox) mobileDraftBox.style.backgroundColor = '#f1c40f'; 
                 }
             } else if (gameState.status === 'ATTACK' && isMyTurn) {
-                mobileDraftBox.style.display = 'none';
-                mobileAttackBox.style.display = 'block';
+                if (mobileDraftBox) mobileDraftBox.style.display = 'none';
+                if (mobileAttackBox) mobileAttackBox.style.display = 'block';
             } else {
-                mobileDraftBox.style.display = 'none';
-                mobileAttackBox.style.display = 'none';
+                if (mobileDraftBox) mobileDraftBox.style.display = 'none';
+                if (mobileAttackBox) mobileAttackBox.style.display = 'none';
             }
         }
     } else {

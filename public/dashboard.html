@@ -24,7 +24,11 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
-            background-color: transparent;
+            background-color: #f4eadc;
+            border: 4px solid #4a3424;
+            padding: 15px 30px;
+            border-radius: 20px;
+            box-shadow: 0 4px 0px rgba(0,0,0,0.1);
         }
         .header img {
             width: 180px;
@@ -33,7 +37,7 @@
             font-family: 'Outfit', sans-serif;
             font-size: 40px;
             font-weight: 900;
-            color: #000;
+            color: #a72e25;
             margin: 0;
             text-transform: uppercase;
         }
@@ -409,7 +413,12 @@
             card.id = `room-${pin}`;
             card.innerHTML = `
                 <div class="room-header">
-                    <p class="room-pin-display"><span>PIN:</span> ${pin}</p>
+                    <div>
+                        <p class="room-pin-display" style="margin-bottom: 5px;"><span>PIN:</span> ${pin}</p>
+                        <p style="font-size: 16px; margin: 0; color: #4a3424; font-weight: 600;">
+                            Acesse <span style="color: #a72e25; font-weight: 800; background: #fff; padding: 2px 6px; border-radius: 4px;">hexaclash.onrender.com</span> e insira o PIN abaixo.
+                        </p>
+                    </div>
                     <div class="room-actions">
                         <button class="btn-start-game" id="start-btn-${pin}">Iniciar</button>
                         <a href="host.html?pin=${pin}" target="_blank" class="btn-projector">Projetar</a>

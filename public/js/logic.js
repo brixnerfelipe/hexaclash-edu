@@ -248,9 +248,11 @@ function handleTerritoryClick(tId) {
                 // Abre quiz se houver perguntas
                 if (gameState.questionBank && gameState.questionBank.length > 0) {
                     if (window.showQuizModal) window.showQuizModal(origin.id, t.id);
+                    if (window.socket && window.gameRoomPin) window.socket.emit('combat_visual_start', { pin: window.gameRoomPin, originId: origin.id, targetId: t.id });
                 } else {
                     // Sem quiz, ataque direto!
                     if (window.submitQuizAnswer) window.submitQuizAnswer(true, origin.id, t.id, null);
+                    if (window.socket && window.gameRoomPin) window.socket.emit('combat_visual_start', { pin: window.gameRoomPin, originId: origin.id, targetId: t.id });
                 }
             } else if (t.owner === currentPlayerId && t.armies > 1) {
                 // Troca origem se clicou em outro território próprio válido
@@ -400,6 +402,7 @@ function applyQuizPenalty(originId) {
     recalculateStats();
     if (window.updateUIFull) window.updateUIFull();
     if (window.emitSync) window.emitSync();
+    if (window.socket && window.gameRoomPin) window.socket.emit('combat_visual_end', { pin: window.gameRoomPin });
 }
 
 function executeCombat(originId, targetId) {
@@ -481,6 +484,7 @@ function applyCombatResults(originId, targetId, attackLosses, defenseLosses, mov
     }
     
     if (window.emitSync) window.emitSync();
+    if (window.socket && window.gameRoomPin) window.socket.emit('combat_visual_end', { pin: window.gameRoomPin });
 }
 
 function nextTurn() {

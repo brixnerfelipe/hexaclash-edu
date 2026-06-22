@@ -168,6 +168,25 @@
             border-radius: 20px;
             border: 4px solid var(--border-color);
         }
+        @keyframes laserShoot {
+            0% { stroke-dashoffset: 100; stroke-opacity: 1; stroke-width: 4; }
+            50% { stroke-width: 8; stroke-opacity: 1; }
+            100% { stroke-dashoffset: 0; stroke-opacity: 0; stroke-width: 2; }
+        }
+        .fx-laser {
+            stroke: #e74c3c;
+            stroke-dasharray: 30 15;
+            animation: laserShoot 0.4s linear infinite;
+        }
+        @keyframes fxPulse {
+            0% { transform: scale(1); filter: drop-shadow(0 0 10px #e74c3c); }
+            50% { transform: scale(1.1); filter: drop-shadow(0 0 25px #e74c3c); }
+            100% { transform: scale(1); filter: drop-shadow(0 0 10px #e74c3c); }
+        }
+        .fx-target {
+            transform-origin: center;
+            animation: fxPulse 0.5s ease-in-out infinite;
+        }
     </style>
 </head>
 <body>
@@ -175,6 +194,7 @@
     <div class="map-area">
         <div id="waiting-msg" class="waiting-msg">Aguardando início da partida...</div>
         <svg id="game-map" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid meet" style="display: none;"></svg>
+        <svg id="fx-layer" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid meet" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100;"></svg>
     </div>
 
     <div class="sidebar">
@@ -294,6 +314,49 @@
 
             // Atualiza os Logs
             updateActionLog();
+        });
+
+        socket.on('show_combat_visual', (data) => {
+            const { originId, targetId } = data;
+            const origin = gameState.territories.find(t => t.id === originId);
+            const target = gameState.territories.find(t => t.id === targetId);
+            if (!origin || !target) return;
+
+            const offsetX = 180;
+            const offsetY = 100;
+            const HEX_WIDTH = Math.sqrt(3) * 45;
+            const HEX_HEIGHT = 2 * 45;
+
+            const ox = origin.col * HEX_WIDTH + (origin.row % 2) * (HEX_WIDTH / 2) + offsetX;
+            const oy = origin.row * HEX_HEIGHT * 0.75 + offsetY;
+            
+            const tx = target.col * HEX_WIDTH + (target.row % 2) * (HEX_WIDTH / 2) + offsetX;
+            const ty = target.row * HEX_HEIGHT * 0.75 + offsetY;
+
+            const fxLayer = document.getElementById('fx-layer');
+            if (!fxLayer) return;
+            fxLayer.innerHTML = '';
+            
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", ox);
+            line.setAttribute("y1", oy);
+            line.setAttribute("x2", tx);
+            line.setAttribute("y2", ty);
+            line.setAttribute("class", "fx-laser");
+            fxLayer.appendChild(line);
+
+            const explosion = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            explosion.setAttribute("x", tx);
+            explosion.setAttribute("y", ty);
+            explosion.setAttribute("class", "fx-target");
+            explosion.setAttribute("style", "font-size: 40px; text-anchor: middle; dominant-baseline: central;");
+            explosion.textContent = "💥";
+            fxLayer.appendChild(explosion);
+        });
+
+        socket.on('hide_combat_visual', () => {
+            const fxLayer = document.getElementById('fx-layer');
+            if (fxLayer) fxLayer.innerHTML = '';
         });
 
         function updateLeaderboard() {

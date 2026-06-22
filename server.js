@@ -160,6 +160,18 @@ io.on('connection', (socket) => {
             socket.to(pin).emit('sync_state', state); // Broadcast to all OTHERS in the room
         }
     });
+
+    socket.on('combat_visual_start', (data) => {
+        if (gameRooms[data.pin]) {
+            io.to(data.pin).emit('show_combat_visual', data);
+        }
+    });
+
+    socket.on('combat_visual_end', (data) => {
+        if (gameRooms[data.pin]) {
+            io.to(data.pin).emit('hide_combat_visual', data);
+        }
+    });
     
     // Botão Iniciar Partida apertado no Dashboard
     socket.on('start_game', (pin) => {

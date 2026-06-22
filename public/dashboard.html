@@ -478,7 +478,8 @@
                 players.forEach((p, index) => {
                     const color = PLAYER_COLORS[index % PLAYER_COLORS.length];
                     gameState.players[index + 1] = {
-                        id: p.id, // O ID agora é o socket.id
+                        id: p.id, // O ID original
+                        token: p.token, // Fundamental para reconexão
                         name: p.name,
                         color: color,
                         objective: null,

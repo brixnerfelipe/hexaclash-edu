@@ -29,6 +29,13 @@ function getRegionColor(regionName) {
     return r ? r.color : '#ccc';
 }
 
+function checkIsMyTurn(pId) {
+    if (!window.gameState || !window.gameState.players[pId]) return false;
+    const myToken = localStorage.getItem('war_playerToken');
+    if (!myToken) return true; // Host PC ou teste local fallback
+    return window.gameState.players[pId].token === myToken;
+}
+
 function renderMap() {
     const mapEl = document.getElementById('game-map');
     mapEl.innerHTML = ''; 
@@ -195,7 +202,7 @@ function updateDashboard() {
         lobbyControls.style.display = 'none';
         
         // Oculta painéis se não for a vez deste socket
-        const isMyTurn = (typeof window.socket !== 'undefined' && window.socket.id === gameState.players[currentPlayerId].id);
+        const isMyTurn = checkIsMyTurn(currentPlayerId);
 
         if (gameState.status === 'DRAFT' && isMyTurn) {
             draftPanel.style.display = 'block';
@@ -269,8 +276,7 @@ function updateInteractionOverlay() {
     }
     
     const currentPlayerId = getCurrentPlayerId();
-    const activePlayerSocket = gameState.players[currentPlayerId].id;
-    const isMyTurn = (typeof window.socket !== 'undefined' && window.socket.id === activePlayerSocket);
+    const isMyTurn = checkIsMyTurn(currentPlayerId);
     
     let overlay = document.getElementById('turn-overlay');
     if (!isMyTurn) {
@@ -588,7 +594,7 @@ setInterval(() => {
         if (remaining <= 0 && !isPaused) {
             const pId = window.getCurrentPlayerId ? window.getCurrentPlayerId() : null;
             if (pId !== null && window.gameState.players[pId]) {
-                const isMyTurn = (window.gameState.players[pId].token === localStorage.getItem('war_playerToken'));
+                const isMyTurn = checkIsMyTurn(pId);
                 if (isMyTurn) {
                     window.gameState.attackTimeRemaining = 0; 
                     if (window.hideQuizModal) window.hideQuizModal();

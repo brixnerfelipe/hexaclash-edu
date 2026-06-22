@@ -497,3 +497,112 @@ body {
     0% { transform: translateY(0) rotate(0deg); opacity: 1; }
     100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
 }
+
+/* Mobile HUD (Fase 11) */
+#mobile-hud {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .dashboard {
+        display: none !important;
+    }
+    
+    .map-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 1;
+        min-height: 100vh;
+    }
+    
+    #mobile-hud {
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 100;
+    }
+    
+    #mobile-turn-badge {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #f4eadc;
+        color: #a72e25;
+        font-size: 28px;
+        font-weight: 900;
+        padding: 10px 30px;
+        border-radius: 20px;
+        border: 4px solid #4a3424;
+        box-shadow: 0 6px 0 rgba(0,0,0,0.1);
+        text-transform: uppercase;
+    }
+    
+    #mobile-bottom-panel {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        padding: 20px;
+        pointer-events: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .mobile-action-box {
+        border-radius: 20px;
+        border: 4px solid #4a3424;
+        padding: 15px;
+        text-align: center;
+        box-shadow: 0 6px 0 rgba(0,0,0,0.15);
+    }
+    
+    #mobile-draft-box {
+        background-color: #2ecc71; /* Fica verde quando exércitos == 0 no JS, senão amarelo */
+    }
+    #mobile-draft-box h2 { font-size: 20px; color: #333; margin-bottom: 10px; }
+    
+    #mobile-attack-box {
+        background-color: #f39c12;
+    }
+    #mobile-attack-box h2 { font-size: 20px; color: #fff; margin-bottom: 5px; }
+    #mobile-attack-box p { font-size: 14px; margin-bottom: 15px; color: #fff; }
+    
+    .mobile-stats-box {
+        background-color: #f4eadc;
+        border: 4px dashed #4a3424;
+        border-radius: 15px;
+        padding: 15px;
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+    }
+    
+    .mobile-stats-left p {
+        font-size: 12px;
+        font-weight: bold;
+        margin-top: 5px;
+    }
+    
+    .mobile-stats-right {
+        background-color: #f1c40f;
+        padding: 10px;
+        border-radius: 10px;
+        border: 2px solid #4a3424;
+        flex: 1;
+    }
+    .mobile-stats-right p {
+        font-size: 11px;
+        font-weight: bold;
+        margin-top: 5px;
+    }
+}
+

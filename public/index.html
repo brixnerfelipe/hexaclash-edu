@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>HexaClash Edu - Aluno</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
@@ -125,6 +125,7 @@
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
     <script>
         window.socket = io();
 
@@ -238,8 +239,45 @@
 
         <!-- Área Principal / Tabuleiro -->
         <main class="map-container" id="map-container">
-            <svg id="game-map" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid meet"></svg>
+            <svg id="game-map" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid meet">
+                <g id="map-contents"></g>
+            </svg>
         </main>
+
+        <!-- HUD Mobile (Escondido no Desktop via CSS) -->
+        <div id="mobile-hud">
+            <div id="mobile-turn-badge" style="display: none;">SUA VEZ</div>
+            
+            <div id="mobile-bottom-panel" style="display: none;">
+                <!-- Dinâmico dependendo da fase -->
+                <div id="mobile-draft-box" class="mobile-action-box" style="display: none;">
+                    <h2 id="mobile-draft-text">Exércitos para distribuir: 0</h2>
+                    <button id="mobile-btn-confirm-draft" class="btn-primary" style="display: none;">CONFIRMAR POSICIONAMENTO</button>
+                </div>
+                
+                <div id="mobile-attack-box" class="mobile-action-box" style="display: none;">
+                    <h2>Fase de Ataques</h2>
+                    <p>Selecione um território seu (com > 1 exército) e um inimigo vizinho para atacar!</p>
+                    <button id="mobile-btn-end-attack" class="btn-primary btn-danger">ENCERRAR TURNOS DE ATAQUE</button>
+                </div>
+
+                <div class="mobile-stats-box">
+                    <div class="mobile-stats-left">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div id="mobile-color-swatch" class="player-color-swatch"></div>
+                            <h3 id="mobile-player-name" style="margin: 0; font-size: 18px;">Jogador</h3>
+                        </div>
+                        <p id="mobile-stat-terr">Territórios: 0</p>
+                        <p id="mobile-stat-armies">Exércitos no Mapa: 0</p>
+                        <p id="mobile-stat-bonus">Ganhos Base/Bônus: +0</p>
+                    </div>
+                    <div class="mobile-stats-right">
+                        <strong>Objetivo:</strong>
+                        <p id="mobile-player-objective">Objetivo não revelado</p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Overlay de Turno (Hot Seat) -->
         <div id="hotseat-modal" class="overlay-modal" style="display: none;">

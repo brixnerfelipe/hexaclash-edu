@@ -525,19 +525,59 @@ window.showVictoryScreen = (playerId) => {
     objectiveText.innerHTML = p.objective.description;
     
     // Confetes
+    const confettiContainer = document.getElementById('confetti-container');
+    if (!confettiContainer) return;
     confettiContainer.innerHTML = '';
-    const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#e67e22'];
     
-    for (let i = 0; i < 60; i++) {
-        const piece = document.createElement('div');
-        piece.className = 'confetti-piece';
-        piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-        piece.style.left = Math.random() * 100 + '%';
-        piece.style.animationDuration = (Math.random() * 2 + 2) + 's';
-        piece.style.animationDelay = (Math.random() * 2) + 's';
-        confettiContainer.appendChild(piece);
+    for(let i=0; i<100; i++) {
+        const c = document.createElement('div');
+        c.className = 'confetti-piece';
+        c.style.left = Math.random() * 100 + '%';
+        c.style.backgroundColor = Math.random() > 0.5 ? p.color : '#fff';
+        c.style.animationDuration = (Math.random() * 3 + 2) + 's';
+        c.style.animationDelay = (Math.random() * 2) + 's';
+        confettiContainer.appendChild(c);
     }
     
     modal.style.display = 'flex';
 };
 
+// Global Timer Loop
+setInterval(() => {
+    if (window.gameState && window.gameState.status === 'ATTACK' && window.gameState.attackPhaseEndsAt) {
+        let remaining = Math.ceil((window.gameState.attackPhaseEndsAt - Date.now()) / 1000);
+        
+        const timerUI = document.getElementById('global-timer');
+        if (timerUI) {
+            if (remaining > 0) {
+                timerUI.textContent = `⏳ ${remaining}s`;
+                timerUI.style.display = 'block';
+            } else {
+                timerUI.style.display = 'none';
+            }
+        }
+        
+        if (remaining <= 0) {
+            const pId = window.getCurrentPlayerId ? window.getCurrentPlayerId() : null;
+            if (pId !== null && window.gameState.players[pId]) {
+                const isMyTurn = (window.gameState.players[pId].token === localStorage.getItem('war_playerToken'));
+                if (isMyTurn) {
+                    window.gameState.attackPhaseEndsAt = null; 
+                    if (window.hideQuizModal) window.hideQuizModal();
+                    // Also close battle arena if it's open
+                    const battleModal = document.getElementById('battle-modal');
+                    if (battleModal) battleModal.style.display = 'none';
+                    if (window.battleDiceInterval) clearInterval(window.battleDiceInterval);
+                    
+                    if (window.endAttackPhase) {
+                        window.endAttackPhase();
+                        window.emitSync();
+                    }
+                }
+            }
+        }
+    } else {
+        const timerUI = document.getElementById('global-timer');
+        if (timerUI) timerUI.style.display = 'none';
+    }
+}, 1000);

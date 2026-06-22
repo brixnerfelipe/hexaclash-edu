@@ -46,17 +46,24 @@ function renderMap() {
         setTimeout(() => {
             try {
                 window.panZoomInstance = svgPanZoom('#game-map', {
-                    zoomEnabled: true,
+                    viewportSelector: '.svg-pan-zoom_viewport',
+                    panEnabled: true,
                     controlIconsEnabled: false,
+                    zoomEnabled: true,
+                    dblClickZoomEnabled: false,
+                    mouseWheelZoomEnabled: true,
+                    preventMouseEventsDefault: false,
                     fit: true,
-                    center: true,
-                    minZoom: 0.5,
-                    maxZoom: 5
+                    center: true
                 });
+                // Força o recálculo após renderização
+                window.panZoomInstance.resize();
+                window.panZoomInstance.fit();
+                window.panZoomInstance.center();
             } catch (e) {
                 console.error("Erro ao inicializar svgPanZoom:", e);
             }
-        }, 100);
+        }, 150);
     }
     
     const offsetX = 180;

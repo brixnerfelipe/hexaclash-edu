@@ -572,27 +572,40 @@ window.showVictoryScreen = (playerId) => {
 
 // Global Timer Loop
 setInterval(() => {
-    if (window.gameState && window.gameState.status === 'ATTACK' && window.gameState.attackPhaseEndsAt) {
-        let remaining = Math.ceil((window.gameState.attackPhaseEndsAt - Date.now()) / 1000);
+    const timerUI = document.getElementById('global-timer');
+    if (!timerUI) return;
+    
+    if (window.gameState && window.gameState.status === 'ATTACK') {
+        let remaining = 0;
+        let isPaused = false;
         
-        const timerUI = document.getElementById('global-timer');
-        if (timerUI) {
-            if (remaining > 0) {
-                timerUI.textContent = `⏳ ${remaining}s`;
-                timerUI.style.display = 'block';
-            } else {
-                timerUI.style.display = 'none';
-            }
+        if (window.gameState.attackPhaseEndsAt) {
+            remaining = Math.ceil((window.gameState.attackPhaseEndsAt - Date.now()) / 1000);
+        } else if (window.gameState.attackTimePausedRemaining) {
+            remaining = Math.ceil(window.gameState.attackTimePausedRemaining / 1000);
+            isPaused = true;
+        } else {
+            // Nem iniciado nem pausado
+            timerUI.style.display = 'none';
+            return;
         }
         
-        if (remaining <= 0) {
+        if (remaining > 0) {
+            timerUI.textContent = isPaused ? `⏸️ ${remaining}s` : `⏳ ${remaining}s`;
+            timerUI.style.display = 'block';
+        } else {
+            timerUI.style.display = 'none';
+        }
+        
+        // Se zerar e não estiver pausado, finalizar o turno
+        if (remaining <= 0 && !isPaused) {
             const pId = window.getCurrentPlayerId ? window.getCurrentPlayerId() : null;
             if (pId !== null && window.gameState.players[pId]) {
                 const isMyTurn = (window.gameState.players[pId].token === localStorage.getItem('war_playerToken'));
                 if (isMyTurn) {
                     window.gameState.attackPhaseEndsAt = null; 
                     if (window.hideQuizModal) window.hideQuizModal();
-                    // Also close battle arena if it's open
+                    
                     const battleModal = document.getElementById('battle-modal');
                     if (battleModal) battleModal.style.display = 'none';
                     if (window.battleDiceInterval) clearInterval(window.battleDiceInterval);
@@ -605,7 +618,6 @@ setInterval(() => {
             }
         }
     } else {
-        const timerUI = document.getElementById('global-timer');
-        if (timerUI) timerUI.style.display = 'none';
+        timerUI.style.display = 'none';
     }
 }, 1000);

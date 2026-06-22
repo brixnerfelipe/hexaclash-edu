@@ -135,26 +135,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    const mobileBtnConfirmDraft = document.getElementById('mobile-btn-confirm-draft');
-    if (mobileBtnConfirmDraft) {
-        mobileBtnConfirmDraft.addEventListener('click', () => {
-            if(window.enterAttackPhase) {
-                window.enterAttackPhase();
-                if(window.emitSync) window.emitSync();
-            }
-        });
-    }
-
-    const mobileBtnEndAttack = document.getElementById('mobile-btn-end-attack');
-    if (mobileBtnEndAttack) {
-        mobileBtnEndAttack.addEventListener('click', () => {
-            if(window.endAttackPhase) {
-                window.endAttackPhase();
-                if(window.emitSync) window.emitSync();
-            }
-        });
-    }
-    
     const btnReturnLobby = document.getElementById('btn-return-lobby');
     if (btnReturnLobby) {
         btnReturnLobby.addEventListener('click', () => {

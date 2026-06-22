@@ -554,7 +554,6 @@ window.showVictoryScreen = (playerId) => {
     objectiveText.innerHTML = p.objective.description;
     
     // Confetes
-    const confettiContainer = document.getElementById('confetti-container');
     if (!confettiContainer) return;
     confettiContainer.innerHTML = '';
     

@@ -333,7 +333,25 @@ window.hideHotSeatModal = () => {
 
 let quizTimerInterval = null;
 
+window.pauseGlobalTimer = () => {
+    if (window.gameState && window.gameState.attackPhaseEndsAt) {
+        window.gameState.attackTimePausedRemaining = window.gameState.attackPhaseEndsAt - Date.now();
+        window.gameState.attackPhaseEndsAt = null;
+        if (window.emitSync) window.emitSync();
+    }
+};
+
+window.resumeGlobalTimer = () => {
+    if (window.gameState && window.gameState.attackTimePausedRemaining) {
+        window.gameState.attackPhaseEndsAt = Date.now() + window.gameState.attackTimePausedRemaining;
+        window.gameState.attackTimePausedRemaining = null;
+        if (window.emitSync) window.emitSync();
+    }
+};
+
 window.showQuizModal = (originId, targetId) => {
+    window.pauseGlobalTimer();
+    
     const modal = document.getElementById('quiz-modal');
     const activeContent = document.getElementById('quiz-content-active');
     const failureContent = document.getElementById('quiz-content-failure');
@@ -359,6 +377,12 @@ window.showQuizModal = (originId, targetId) => {
         }
     }
     
+    if (!availableQuestions || availableQuestions.length === 0) {
+        window.resumeGlobalTimer();
+        if(window.submitQuizAnswer) window.submitQuizAnswer(true, originId, targetId, null);
+        return;
+    }
+    
     const questionData = availableQuestions[Math.floor(Math.random() * availableQuestions.length)];
     
     questionEl.textContent = questionData.question;
@@ -375,11 +399,14 @@ window.showQuizModal = (originId, targetId) => {
         const btn = document.createElement('button');
         btn.className = 'btn-quiz-option';
         btn.textContent = opt;
+        btn.style.width = '100%';
+        btn.style.marginTop = '10px';
         btn.onclick = () => {
             clearInterval(quizTimerInterval);
             const isCorrect = (opt === questionData.correctAnswer);
             if (isCorrect) {
                 hideQuizModal();
+                window.resumeGlobalTimer();
             }
             if(window.submitQuizAnswer) window.submitQuizAnswer(isCorrect, originId, targetId, questionData.id);
         };
@@ -415,6 +442,7 @@ window.showQuizFailureUI = (originId, targetId) => {
     
     btnFailContinue.onclick = () => {
         hideQuizModal();
+        window.resumeGlobalTimer();
         if(window.applyQuizPenalty) window.applyQuizPenalty(originId);
     };
 };
@@ -429,6 +457,8 @@ window.hideQuizModal = hideQuizModal;
 let battleDiceInterval = null;
 
 window.showBattleArena = (attackRolls, defenseRolls, attackLostIndexes, defenseLostIndexes, attackLosses, defenseLosses, targetConquered, moveArmies, originId, targetId) => {
+    window.pauseGlobalTimer();
+    
     const modal = document.getElementById('battle-modal');
     const attackContainer = document.getElementById('battle-dice-attack');
     const defenseContainer = document.getElementById('battle-dice-defense');
@@ -489,23 +519,22 @@ window.showBattleArena = (attackRolls, defenseRolls, attackLostIndexes, defenseL
             }
         });
         
-        // Mensagem de resultado
-        let msg = `Atacante perdeu ${attackLosses} exército(s).<br>Defensor perdeu ${defenseLosses} exército(s).`;
+        let msg = `Atacante perdeu ${attackLosses} tropas.<br>Defensor perdeu ${defenseLosses} tropas.`;
         if (targetConquered) {
-            msg += `<br><br><span style="color:#27ae60">VITÓRIA!</span> Território conquistado! ${moveArmies} exército(s) transferidos.`;
+            msg += `<br><span style="color:#2ecc71; font-size:24px;">VITÓRIA! Território dominado!</span>`;
+        } else {
+            msg += `<br><span style="color:#e74c3c;">Defesa resistiu!</span>`;
         }
         resultsText.innerHTML = msg;
         
-        // Exibe botão pra concluir a mutação de estado
         btnContinue.style.display = 'inline-block';
-        btnContinue.onclick = () => {
-            modal.style.display = 'none';
-            if(window.applyCombatResults) {
-                window.applyCombatResults(originId, targetId, attackLosses, defenseLosses, moveArmies, targetConquered);
-            }
-        };
-        
     }, 1500);
+    
+    btnContinue.onclick = () => {
+        modal.style.display = 'none';
+        window.resumeGlobalTimer();
+        if(window.applyCombatResults) window.applyCombatResults(originId, targetId, attackLosses, defenseLosses, Math.max(moveArmies, 1), targetConquered);
+    };
 };
 
 window.showVictoryScreen = (playerId) => {

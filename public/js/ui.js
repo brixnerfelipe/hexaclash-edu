@@ -331,20 +331,16 @@ window.hideHotSeatModal = () => {
     modal.style.display = 'none';
 };
 
-let quizTimerInterval = null;
-
 window.pauseGlobalTimer = () => {
-    if (window.gameState && window.gameState.attackPhaseEndsAt) {
-        window.gameState.attackTimePausedRemaining = window.gameState.attackPhaseEndsAt - Date.now();
-        window.gameState.attackPhaseEndsAt = null;
+    if (window.gameState) {
+        window.gameState.isTimerPaused = true;
         if (window.emitSync) window.emitSync();
     }
 };
 
 window.resumeGlobalTimer = () => {
-    if (window.gameState && window.gameState.attackTimePausedRemaining) {
-        window.gameState.attackPhaseEndsAt = Date.now() + window.gameState.attackTimePausedRemaining;
-        window.gameState.attackTimePausedRemaining = null;
+    if (window.gameState) {
+        window.gameState.isTimerPaused = false;
         if (window.emitSync) window.emitSync();
     }
 };
@@ -386,23 +382,19 @@ window.showQuizModal = (originId, targetId) => {
     const questionData = availableQuestions[Math.floor(Math.random() * availableQuestions.length)];
     
     questionEl.textContent = questionData.question;
+    
+    let allOptions = [questionData.correctAnswer, ...questionData.wrongAnswers];
+    allOptions.sort(() => Math.random() - 0.5);
+    
     optionsEl.innerHTML = '';
-    
-    // Junta e Embaralha (Fisher-Yates)
-    const options = [questionData.correctAnswer, ...questionData.wrongAnswers];
-    for (let i = options.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [options[i], options[j]] = [options[j], options[i]];
-    }
-    
-    options.forEach((opt) => {
+    allOptions.forEach(opt => {
         const btn = document.createElement('button');
         btn.className = 'btn-quiz-option';
         btn.textContent = opt;
         btn.style.width = '100%';
         btn.style.marginTop = '10px';
         btn.onclick = () => {
-            clearInterval(quizTimerInterval);
+            if(quizTimerInterval) clearTimeout(quizTimerInterval);
             const isCorrect = (opt === questionData.correctAnswer);
             if (isCorrect) {
                 hideQuizModal();
@@ -422,14 +414,9 @@ window.showQuizModal = (originId, targetId) => {
     timerBar.style.transition = 'width 20s linear';
     timerBar.style.width = '0%';
     
-    let timeLeft = 20;
-    quizTimerInterval = setInterval(() => {
-        timeLeft--;
-        if (timeLeft <= 0) {
-            clearInterval(quizTimerInterval);
-            if(window.submitQuizAnswer) window.submitQuizAnswer(false, originId, targetId);
-        }
-    }, 1000);
+    quizTimerInterval = setTimeout(() => {
+        if(window.submitQuizAnswer) window.submitQuizAnswer(false, originId, targetId);
+    }, 20000);
 };
 
 window.showQuizFailureUI = (originId, targetId) => {
@@ -450,11 +437,12 @@ window.showQuizFailureUI = (originId, targetId) => {
 function hideQuizModal() {
     const modal = document.getElementById('quiz-modal');
     modal.style.display = 'none';
-    if(quizTimerInterval) clearInterval(quizTimerInterval);
+    if(quizTimerInterval) clearTimeout(quizTimerInterval);
 }
 window.hideQuizModal = hideQuizModal;
 
 let battleDiceInterval = null;
+let quizTimerInterval = null;
 
 window.showBattleArena = (attackRolls, defenseRolls, attackLostIndexes, defenseLostIndexes, attackLosses, defenseLosses, targetConquered, moveArmies, originId, targetId) => {
     window.pauseGlobalTimer();
@@ -541,7 +529,6 @@ window.showVictoryScreen = (playerId) => {
     const modal = document.getElementById('victory-modal');
     const subtitle = document.getElementById('victory-subtitle');
     const objectiveText = document.getElementById('victory-objective');
-    const confettiContainer = document.getElementById('confetti-container');
     const mapContainer = document.getElementById('map-container');
     
     const p = gameState.players[playerId];
@@ -554,6 +541,7 @@ window.showVictoryScreen = (playerId) => {
     objectiveText.innerHTML = p.objective.description;
     
     // Confetes
+    const confettiContainer = document.getElementById('confetti-container');
     if (!confettiContainer) return;
     confettiContainer.innerHTML = '';
     
@@ -576,19 +564,18 @@ setInterval(() => {
     if (!timerUI) return;
     
     if (window.gameState && window.gameState.status === 'ATTACK') {
-        let remaining = 0;
-        let isPaused = false;
         
-        if (window.gameState.attackPhaseEndsAt) {
-            remaining = Math.ceil((window.gameState.attackPhaseEndsAt - Date.now()) / 1000);
-        } else if (window.gameState.attackTimePausedRemaining) {
-            remaining = Math.ceil(window.gameState.attackTimePausedRemaining / 1000);
-            isPaused = true;
-        } else {
-            // Nem iniciado nem pausado
+        if (window.gameState.attackTimeRemaining === undefined) {
             timerUI.style.display = 'none';
             return;
         }
+
+        if (!window.gameState.isTimerPaused && window.gameState.attackTimeRemaining > 0) {
+            window.gameState.attackTimeRemaining--;
+        }
+        
+        let remaining = window.gameState.attackTimeRemaining;
+        let isPaused = window.gameState.isTimerPaused;
         
         if (remaining > 0) {
             timerUI.textContent = isPaused ? `⏸️ ${remaining}s` : `⏳ ${remaining}s`;
@@ -603,7 +590,7 @@ setInterval(() => {
             if (pId !== null && window.gameState.players[pId]) {
                 const isMyTurn = (window.gameState.players[pId].token === localStorage.getItem('war_playerToken'));
                 if (isMyTurn) {
-                    window.gameState.attackPhaseEndsAt = null; 
+                    window.gameState.attackTimeRemaining = 0; 
                     if (window.hideQuizModal) window.hideQuizModal();
                     
                     const battleModal = document.getElementById('battle-modal');

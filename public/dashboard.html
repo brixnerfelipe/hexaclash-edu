@@ -300,23 +300,38 @@
         const csvUpload = document.getElementById('csv-upload');
         const csvCount = document.getElementById('csv-count');
         
+        let hostToken = localStorage.getItem('war_hostToken');
+        if (!hostToken) {
+            hostToken = Math.random().toString(36).substring(2, 15);
+            localStorage.setItem('war_hostToken', hostToken);
+        }
+
         let activeRooms = [];
         let parsedQuestions = [];
         let roomPlayers = {};
 
+        // Tenta reconectar a salas previamente abertas
+        let savedRooms = JSON.parse(localStorage.getItem('war_activeRooms') || '[]');
+        savedRooms.forEach(pin => {
+            socket.emit('rejoin_host', { pin, hostToken });
+        });
+
         // UI Criar Sala
         createRoomBtn.addEventListener('click', () => {
-            socket.emit('create_room');
+            socket.emit('create_room', hostToken);
         });
 
         // Escuta retorno do server
         socket.on('room_created', (pin) => {
-            activeRooms.push(pin);
-            roomPlayers[pin] = [];
-            renderRoomCard(pin);
-            // Injeta questoes se já tiver lido o csv
-            if (parsedQuestions.length > 0) {
-                socket.emit('upload_csv', { pin: pin, bank: parsedQuestions });
+            if (!activeRooms.includes(pin)) {
+                activeRooms.push(pin);
+                localStorage.setItem('war_activeRooms', JSON.stringify(activeRooms));
+                roomPlayers[pin] = [];
+                renderRoomCard(pin);
+                // Injeta questoes se já tiver lido o csv
+                if (parsedQuestions.length > 0) {
+                    socket.emit('upload_csv', { pin: pin, bank: parsedQuestions });
+                }
             }
         });
 
@@ -332,7 +347,9 @@
                     list.innerHTML = '';
                     data.players.forEach(p => {
                         const li = document.createElement('li');
-                        li.innerHTML = `<span>${p.name.toUpperCase()}</span> <span class="player-status">${isStarted ? 'JOGANDO' : 'ESPERANDO INÍCIO'}</span>`;
+                        const offlineStyle = p.isOffline ? 'color: #e74c3c; font-style: italic;' : '';
+                        const offlineBadge = p.isOffline ? ' ⚠️ OFFLINE' : '';
+                        li.innerHTML = `<span style="${offlineStyle}">${p.name.toUpperCase()}${offlineBadge}</span> <span class="player-status">${isStarted ? 'JOGANDO' : 'ESPERANDO INÍCIO'}</span>`;
                         list.appendChild(li);
                     });
                 }

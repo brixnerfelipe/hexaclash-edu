@@ -136,6 +136,16 @@
         const errorMsg = document.getElementById('error-msg');
         const playerWelcome = document.getElementById('player-welcome');
 
+        const savedPlayerToken = localStorage.getItem('war_playerToken');
+        const savedRoomPin = localStorage.getItem('war_roomPin');
+
+        if (savedPlayerToken && savedRoomPin) {
+            loginScreen.style.display = 'none';
+            waitingScreen.style.display = 'block';
+            waitingScreen.innerHTML = `<h1>Reconectando...</h1><div class="spinner"></div>`;
+            window.socket.emit('rejoin_player', { pin: savedRoomPin, token: savedPlayerToken });
+        }
+
         joinBtn.addEventListener('click', () => {
             const pin = pinInput.value.trim();
             const name = nameInput.value.trim();
@@ -155,9 +165,25 @@
 
         window.socket.on('join_success', (data) => {
             window.gameRoomPin = data.pin;
+            if (data.token) localStorage.setItem('war_playerToken', data.token);
+            localStorage.setItem('war_roomPin', data.pin);
             loginScreen.style.display = 'none';
             waitingScreen.style.display = 'block';
             playerWelcome.textContent = `Olá, ${data.name}! Você está na sala ${data.pin}.`;
+        });
+
+        window.socket.on('rejoin_success', (data) => {
+            window.gameRoomPin = data.pin;
+            loginScreen.style.display = 'none';
+            waitingScreen.style.display = 'block';
+            waitingScreen.innerHTML = `<h1>Aguardando andamento...</h1><div class="spinner"></div>`;
+        });
+
+        window.socket.on('rejoin_error', (msg) => {
+            localStorage.removeItem('war_playerToken');
+            localStorage.removeItem('war_roomPin');
+            alert("Sessão expirada: " + msg);
+            location.reload();
         });
 
         window.socket.on('game_started', () => {

@@ -320,10 +320,13 @@
                     row.style.boxShadow = `0 0 5px ${p.color}`;
                 }
 
+                const offlineOpacity = p.isOffline ? 'opacity: 0.5;' : '';
+                const offlineBadge = p.isOffline ? ' ⚠️' : '';
+
                 row.innerHTML = `
-                    <div class="player-color" style="background-color: ${p.color};"></div>
-                    <div class="player-info">
-                        <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.name}</span>
+                    <div class="player-color" style="background-color: ${p.color}; ${offlineOpacity}"></div>
+                    <div class="player-info" style="${offlineOpacity}">
+                        <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.name}${offlineBadge}</span>
                         <span style="margin-left: 10px;" title="Territórios">🏰 ${p.territoriesCount}</span>
                         <span style="margin-left: 10px;" title="Exércitos">🗡️ ${p.totalArmies}</span>
                     </div>

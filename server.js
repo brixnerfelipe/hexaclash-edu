@@ -26,11 +26,13 @@ io.on('connection', (socket) => {
     
     // ======== ROTEAMENTO DE DASHBOARD ========
     
-    socket.on('create_room', () => {
+    socket.on('create_room', (hostToken) => {
         const pin = generatePIN();
         gameRooms[pin] = {
             pin: pin,
+            hostToken: hostToken,
             hostId: socket.id, // Armazena o ID do professor
+            destructionTimer: null,
             players: [],
             gameState: {},
             questionBank: []
@@ -56,8 +58,28 @@ io.on('connection', (socket) => {
             console.log(`[Host] Projetor conectado na sala ${pin}`);
             // Envia os jogadores atuais pro host recém conectado
             socket.emit('update_players', { pin: pin, players: gameRooms[pin].players });
+            if (gameRooms[pin].gameState && gameRooms[pin].gameState.status && gameRooms[pin].gameState.status !== 'lobby') {
+                socket.emit('sync_state', gameRooms[pin].gameState);
+            }
         } else {
             socket.emit('room_error', 'Sala não encontrada');
+        }
+    });
+
+    socket.on('rejoin_host', (data) => {
+        const { pin, hostToken } = data;
+        const room = gameRooms[pin];
+        if (room && room.hostToken === hostToken) {
+            // Cancela destruição se houver
+            if (room.destructionTimer) {
+                clearTimeout(room.destructionTimer);
+                room.destructionTimer = null;
+            }
+            room.hostId = socket.id;
+            socket.join(pin);
+            socket.emit('room_created', pin);
+            socket.emit('update_players', { pin: pin, players: room.players });
+            console.log(`[Host] Professor reconectado na sala ${pin}.`);
         }
     });
     
@@ -81,14 +103,38 @@ io.on('connection', (socket) => {
             return;
         }
         
-        const player = { id: socket.id, name: name };
+        const playerToken = Math.random().toString(36).substring(2, 15);
+        const player = { id: socket.id, name: name, token: playerToken, isOffline: false };
         gameRooms[pin].players.push(player);
         
         socket.join(pin);
-        socket.emit('join_success', { pin, name });
+        socket.emit('join_success', { pin, name, token: playerToken });
         console.log(`[Aluno] ${name} entrou na sala ${pin}.`);
         
         io.to(pin).emit('update_players', { pin: pin, players: gameRooms[pin].players });
+    });
+
+    socket.on('rejoin_player', (data) => {
+        const { pin, token } = data;
+        const room = gameRooms[pin];
+        if (room) {
+            const p = room.players.find(player => player.token === token);
+            if (p) {
+                p.id = socket.id;
+                p.isOffline = false;
+                socket.join(pin);
+                socket.emit('rejoin_success', { pin, name: p.name });
+                io.to(pin).emit('update_players', { pin: pin, players: room.players });
+                
+                // Se a partida estiver rodando, reenvia estado para este aluno
+                if (room.gameState && room.gameState.status && room.gameState.status !== 'lobby') {
+                    socket.emit('sync_state', room.gameState);
+                }
+                console.log(`[Aluno] ${p.name} reconectado na sala ${pin}.`);
+                return;
+            }
+        }
+        socket.emit('rejoin_error', 'Sessão não encontrada ou sala encerrada.');
     });
     
     // Broadcast state from one client to others
@@ -120,27 +166,23 @@ io.on('connection', (socket) => {
             
             // 1. Se quem caiu foi o Host (Professor)
             if (room.hostId === socket.id) {
-                console.log(`[Host] Professor desconectou. Fechando sala ${pin}.`);
-                io.to(pin).emit('room_closed', 'O professor encerrou a sala.');
-                delete gameRooms[pin];
+                console.log(`[Host] Professor desconectou da sala ${pin}. Iniciando timer de 5 min...`);
+                room.destructionTimer = setTimeout(() => {
+                    console.log(`[Host] Timeout! Fechando sala ${pin} permanentemente.`);
+                    io.to(pin).emit('room_closed', 'O professor encerrou a sala.');
+                    delete gameRooms[pin];
+                }, 5 * 60 * 1000); // 5 minutos
                 continue;
             }
             
             // 2. Se quem caiu foi um aluno
             const index = room.players.findIndex(p => p.id === socket.id);
             if (index !== -1) {
-                const name = room.players[index].name;
-                room.players.splice(index, 1);
-                console.log(`[Aluno] ${name} desconectou da sala ${pin}.`);
+                const p = room.players[index];
+                p.isOffline = true;
+                console.log(`[Aluno] ${p.name} perdeu conexão na sala ${pin} (isOffline: true).`);
                 
-                // 3. Apagar se ficar vazia
-                if (room.players.length === 0) {
-                    console.log(`[Sala] Todos os alunos saíram. Fechando sala ${pin} vazia.`);
-                    io.to(pin).emit('room_closed', 'A sala foi encerrada por falta de jogadores.');
-                    delete gameRooms[pin];
-                } else {
-                    io.to(pin).emit('update_players', { pin: pin, players: room.players });
-                }
+                io.to(pin).emit('update_players', { pin: pin, players: room.players });
                 break;
             }
         }

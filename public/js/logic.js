@@ -489,14 +489,62 @@ function applyCombatResults(originId, targetId, attackLosses, defenseLosses, mov
 
 function nextTurn() {
     const playerIds = Object.keys(gameState.players).map(Number);
-    gameState.currentPlayerIndex++;
+    let loopProtect = 0;
     
-    if (gameState.currentPlayerIndex >= playerIds.length) {
-        gameState.currentPlayerIndex = 0;
-        gameState.turn++; // Nova rodada
+    while (loopProtect < playerIds.length) {
+        gameState.currentPlayerIndex++;
+        
+        if (gameState.currentPlayerIndex >= playerIds.length) {
+            gameState.currentPlayerIndex = 0;
+            gameState.turn++; // Nova rodada
+        }
+        
+        const nextId = playerIds[gameState.currentPlayerIndex];
+        if (!gameState.players[nextId].isEliminated) {
+            break;
+        }
+        loopProtect++;
+    }
+    
+    if (loopProtect >= playerIds.length) {
+        gameState.status = 'GAMEOVER';
+        if (window.showVictoryScreen) window.showVictoryScreen(null);
+        return;
     }
     
     startTurn();
+}
+
+function kickPlayer(playerId) {
+    if (!gameState.players[playerId]) return;
+    
+    // Marca como eliminado
+    gameState.players[playerId].isEliminated = true;
+    
+    // Neutraliza territórios
+    gameState.territories.forEach(t => {
+        if (t.owner === Number(playerId)) {
+            t.owner = null;
+        }
+    });
+    
+    addGameLog(`O jogador ${gameState.players[playerId].name} foi expulso da partida.`);
+    
+    // Se for o turno dele, pula a vez automaticamente
+    if (getCurrentPlayerId() === Number(playerId)) {
+        forceSkipTurn();
+    } else {
+        if (window.updateUIFull) window.updateUIFull();
+        if (window.emitSync) window.emitSync();
+    }
+}
+
+function forceSkipTurn() {
+    addGameLog(`O turno foi pulado pelo professor.`);
+    gameState.status = 'TURN_START';
+    gameState.selectedOriginId = null;
+    gameState.attackTimeRemaining = 0;
+    nextTurn();
 }
 
 window.addTestPlayer = addTestPlayer;
@@ -510,6 +558,8 @@ window.applyQuizPenalty = applyQuizPenalty;
 window.applyCombatResults = applyCombatResults;
 window.getCurrentPlayerId = getCurrentPlayerId;
 window.parseCSVText = parseCSVText;
+window.kickPlayer = kickPlayer;
+window.forceSkipTurn = forceSkipTurn;
 window.gameState = gameState;
 
 initGame();

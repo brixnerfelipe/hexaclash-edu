@@ -180,6 +180,22 @@ io.on('connection', (socket) => {
             console.log(`[Game] Partida Iniciada na sala ${pin}`);
         }
     });
+    
+    socket.on('kick_player', (data) => {
+        const { pin, token } = data;
+        const room = gameRooms[pin];
+        if (room) {
+            const index = room.players.findIndex(p => p.token === token);
+            if (index !== -1) {
+                const p = room.players[index];
+                if (!p.isOffline) {
+                    io.to(p.id).emit('kicked_from_room');
+                }
+                room.players.splice(index, 1);
+                io.to(pin).emit('update_players', { pin: pin, players: room.players });
+            }
+        }
+    });
 
     socket.on('client_error', (data) => {
         console.error(`[Client Error - Sala ${data.pin}]: ${data.msg}\nStack: ${data.stack}`);

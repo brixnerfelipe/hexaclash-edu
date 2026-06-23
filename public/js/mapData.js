@@ -699,7 +699,8 @@ const TERRITORIES = [
         "y": 472.5,
         "neighbors": [
             34,
-            35
+            35,
+            42
         ]
     },
     {
@@ -713,7 +714,8 @@ const TERRITORIES = [
         "x": 584.5671475544962,
         "y": 472.5,
         "neighbors": [
-            37
+            37,
+            42
         ]
     },
     {
@@ -726,6 +728,9 @@ const TERRITORIES = [
         "row": 8,
         "x": 467.6537180435969,
         "y": 540,
-        "neighbors": []
+        "neighbors": [
+            40,
+            41
+        ]
     }
 ];

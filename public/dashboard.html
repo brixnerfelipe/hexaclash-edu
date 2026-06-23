@@ -353,7 +353,30 @@
                         const li = document.createElement('li');
                         const offlineStyle = p.isOffline ? 'color: #e74c3c; font-style: italic;' : '';
                         const offlineBadge = p.isOffline ? ' ⚠️ OFFLINE' : '';
-                        li.innerHTML = `<span style="${offlineStyle}">${p.name.toUpperCase()}${offlineBadge}</span> <span class="player-status">${isStarted ? 'JOGANDO' : 'ESPERANDO INÍCIO'}</span>`;
+                        
+                        const kickHTML = `<button class="kick-btn" style="background-color: #c0392b; color: white; border: none; padding: 2px 5px; font-size: 12px; margin-left: 10px; cursor: pointer; border-radius: 4px;">Expulsar</button>`;
+                        
+                        li.innerHTML = `<span style="${offlineStyle}">${p.name.toUpperCase()}${offlineBadge}</span> <div><span class="player-status">${isStarted ? 'JOGANDO' : 'ESPERANDO INÍCIO'}</span>${kickHTML}</div>`;
+                        
+                        const kickBtn = li.querySelector('.kick-btn');
+                        kickBtn.addEventListener('click', () => {
+                            if (confirm(`Tem certeza que deseja expulsar o jogador ${p.name}? Se já estiver jogando, seus territórios ficarão neutros.`)) {
+                                // Se a partida já começou, neutraliza via logic.js
+                                if (window.gameState && window.gameState.players) {
+                                    let gId = null;
+                                    for (const [id, playerObj] of Object.entries(window.gameState.players)) {
+                                        if (playerObj.token === p.token) { gId = id; break; }
+                                    }
+                                    if (gId) {
+                                        window.kickPlayer(gId);
+                                        socket.emit('sync_state', { pin: data.pin, state: window.gameState });
+                                    }
+                                }
+                                // Remove no servidor
+                                socket.emit('kick_player', { pin: data.pin, token: p.token });
+                            }
+                        });
+                        
                         list.appendChild(li);
                     });
                 }
@@ -367,6 +390,11 @@
                 startBtn.textContent = 'Partida em Andamento';
                 startBtn.style.backgroundColor = '#95a5a6';
                 startBtn.style.cursor = 'not-allowed';
+            }
+            
+            const skipBtn = document.getElementById(`skip-btn-${pin}`);
+            if (skipBtn) {
+                skipBtn.style.display = 'inline-block';
             }
             
             const list = document.getElementById(`players-${pin}`);
@@ -422,7 +450,8 @@
                     <div class="room-actions">
                         <button class="btn-start-game" id="start-btn-${pin}">Iniciar</button>
                         <a href="host.html?pin=${pin}" target="_blank" class="btn-projector">Projetar</a>
-                        <button class="btn-secondary" id="close-btn-${pin}" style="background-color: #e74c3c; color: white; border: none; margin-left: 10px;">Encerrar Sala</button>
+                        <button class="btn-secondary" id="skip-btn-${pin}" style="display: none; background-color: #f39c12; color: white; border: none; margin-left: 10px; border-radius: 15px; padding: 10px 30px; font-size: 20px; font-weight: 800; cursor: pointer;">Pular Vez Atual</button>
+                        <button class="btn-secondary" id="close-btn-${pin}" style="background-color: #e74c3c; color: white; border: none; margin-left: 10px; border-radius: 15px; padding: 10px 30px; font-size: 20px; font-weight: 800; cursor: pointer;">Encerrar Sala</button>
                     </div>
                 </div>
                 
@@ -440,7 +469,17 @@
             
             const startBtn = document.getElementById(`start-btn-${pin}`);
             const closeBtn = document.getElementById(`close-btn-${pin}`);
+            const skipBtn = document.getElementById(`skip-btn-${pin}`);
             const icon = document.getElementById(`icon-${pin}`);
+            
+            skipBtn.addEventListener('click', () => {
+                if(confirm("Tem certeza que deseja pular o turno atual e passar para o próximo jogador?")) {
+                    if (window.forceSkipTurn) {
+                        window.forceSkipTurn();
+                        socket.emit('sync_state', { pin: pin, state: window.gameState });
+                    }
+                }
+            });
             
             closeBtn.addEventListener('click', () => {
                 if(confirm("Tem certeza que deseja encerrar esta sala permanentemente?")) {
@@ -458,6 +497,7 @@
                 startBtn.disabled = true;
                 startBtn.textContent = 'Partida Iniciada!';
                 startBtn.style.backgroundColor = '#95a5a6';
+                if(skipBtn) skipBtn.style.display = 'inline-block';
                 
                 // Muda ícone da aba
                 if(icon) {

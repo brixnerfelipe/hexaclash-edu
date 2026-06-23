@@ -163,6 +163,13 @@
             errorMsg.textContent = msg;
         });
 
+        window.socket.on('kicked_from_room', () => {
+            localStorage.removeItem('war_playerToken');
+            localStorage.removeItem('war_roomPin');
+            alert('Você foi removido da partida.');
+            window.location.reload();
+        });
+
         window.socket.on('join_success', (data) => {
             window.gameRoomPin = data.pin;
             if (data.token) localStorage.setItem('war_playerToken', data.token);

@@ -459,7 +459,7 @@ function applyCombatResults(originId, targetId, attackLosses, defenseLosses, mov
     const target = gameState.territories.find(t => t.id === targetId);
     
     const attackerName = gameState.players[origin.owner].name;
-    const defenderName = gameState.players[target.owner].name;
+    const defenderName = (target.owner !== null && gameState.players[target.owner]) ? gameState.players[target.owner].name : "Forças Neutras";
     addGameLog(`⚔️ ${attackerName} atacou o território de ${defenderName}! ${attackerName} perdeu ${attackLosses} tropas e ${defenderName} perdeu ${defenseLosses}.`);
     
     origin.armies -= attackLosses;

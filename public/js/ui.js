@@ -38,6 +38,17 @@ function checkIsMyTurn(pId) {
 
 function renderMap() {
     const mapEl = document.getElementById('game-map');
+    if (!mapEl) return;
+    
+    // Adapta o viewBox do SVG dependendo do dispositivo:
+    // No Mobile (<= 900px): enquadramento otimizado para preencher a tela sem sobreposição
+    // No PC/Desktop (> 900px): enquadramento clássico 0 0 1200 800 com margens normais
+    if (window.innerWidth <= 900) {
+        mapEl.setAttribute('viewBox', '85 15 775 700');
+    } else {
+        mapEl.setAttribute('viewBox', '0 0 1200 800');
+    }
+
     mapEl.innerHTML = ''; 
     
     const offsetX = 180;
@@ -635,4 +646,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (mobileBtn) mobileBtn.addEventListener('click', openDrawer);
     if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
     if (backdrop) backdrop.addEventListener('click', closeDrawer);
+});
+
+// Re-renderiza o mapa ao redimensionar a tela (ex: virar o celular ou ajustar janela do PC)
+let resizeTimeout = null;
+window.addEventListener('resize', () => {
+    if (resizeTimeout) clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+        if (window.renderMap) window.renderMap();
+    }, 150);
 });

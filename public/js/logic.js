@@ -245,6 +245,27 @@ function handleTerritoryClick(tId) {
             // Seleção de Alvo
             const origin = gameState.territories.find(x => x.id === gameState.selectedOriginId);
             if (t.owner !== currentPlayerId && origin.neighbors.includes(tId)) {
+                
+                // Território neutro e vazio: conquista automática sem quiz ou dados
+                if (t.owner === null && t.armies === 0) {
+                    const attackerName = gameState.players[origin.owner].name;
+                    addGameLog(`🏴 ${attackerName} ocupou um território neutro sem resistência.`);
+                    t.owner = origin.owner;
+                    origin.armies -= 1;
+                    t.armies = 1;
+                    gameState.selectedOriginId = null;
+                    recalculateStats();
+                    if (window.updateUIFull) window.updateUIFull();
+                    if (window.emitSync) window.emitSync();
+                    
+                    if (checkWinCondition(origin.owner)) {
+                        gameState.status = 'GAMEOVER';
+                        gameState.winnerId = origin.owner;
+                        if (window.showVictoryScreen) window.showVictoryScreen(origin.owner);
+                    }
+                    return;
+                }
+                
                 // Abre quiz se houver perguntas
                 if (gameState.questionBank && gameState.questionBank.length > 0) {
                     if (window.showQuizModal) window.showQuizModal(origin.id, t.id);
@@ -521,10 +542,11 @@ function kickPlayer(playerId) {
     // Marca como eliminado
     gameState.players[playerId].isEliminated = true;
     
-    // Neutraliza territórios
+    // Neutraliza territórios e zera exércitos
     gameState.territories.forEach(t => {
         if (t.owner === Number(playerId)) {
             t.owner = null;
+            t.armies = 0;
         }
     });
     

@@ -614,25 +614,3 @@ setInterval(() => {
         timerUI.style.display = 'none';
     }
 }, 1000);
-
-// Controle do Drawer Mobile (Objetivo e Placar)
-document.addEventListener('DOMContentLoaded', () => {
-    const mobileBtn = document.getElementById('mobile-menu-btn');
-    const closeBtn = document.getElementById('close-drawer-btn');
-    const backdrop = document.getElementById('drawer-backdrop');
-    const drawer = document.getElementById('players-container');
-
-    function openDrawer() {
-        if (drawer) drawer.classList.add('drawer-open');
-        if (backdrop) backdrop.style.display = 'block';
-    }
-
-    function closeDrawer() {
-        if (drawer) drawer.classList.remove('drawer-open');
-        if (backdrop) backdrop.style.display = 'none';
-    }
-
-    if (mobileBtn) mobileBtn.addEventListener('click', openDrawer);
-    if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
-    if (backdrop) backdrop.addEventListener('click', closeDrawer);
-});

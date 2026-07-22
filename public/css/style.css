@@ -466,7 +466,7 @@ body {
     display: none;
 }
 
-/* Responsividade Mobile-First HUD */
+/* Responsividade Mobile-First HUD & Modais */
 @media (max-width: 900px) {
     body {
         position: fixed;
@@ -503,6 +503,10 @@ body {
     
     .map-container::-webkit-scrollbar {
         display: none;
+    }
+    
+    .map-container.blurred {
+        filter: none !important; /* Desativa blur do mapa no mobile para economizar GPU e evitar bugs */
     }
     
     #game-map {
@@ -544,8 +548,7 @@ body {
         top: 12px;
         right: 12px;
         z-index: 50;
-        background: rgba(44, 62, 80, 0.9);
-        backdrop-filter: blur(8px);
+        background: rgba(44, 62, 80, 0.95);
         color: #f1c40f;
         border: 2px solid #f1c40f;
         border-radius: 20px;
@@ -568,7 +571,6 @@ body {
         max-width: 420px;
         z-index: 40;
         background: rgba(244, 234, 220, 0.96);
-        backdrop-filter: blur(10px);
         border: 3px solid var(--border-color);
         border-radius: 20px;
         padding: 14px 18px;
@@ -600,36 +602,38 @@ body {
         z-index: 45 !important;
     }
 
-    /* Backdrop do Drawer */
+    /* Backdrop do Drawer (Fundo escuro sem blur para evitar texto embaçado) */
     .drawer-backdrop {
         position: fixed;
         top: 0;
         left: 0;
         width: 100vw;
         height: 100vh;
-        background: rgba(0,0,0,0.5);
-        backdrop-filter: blur(4px);
-        z-index: 90;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: none !important;
+        z-index: 180;
         pointer-events: auto;
     }
 
-    /* Drawer de Placar e Objetivos (Oculto por padrão no mobile) */
+    /* Drawer de Placar e Objetivos (Nítido e bem definido) */
     .players-container {
         position: fixed;
         bottom: 0;
         left: 0;
         width: 100vw;
-        max-height: 80vh;
-        background: #f4eadc;
+        max-height: 82vh;
+        background: #f4eadc !important;
         border-top: 4px solid var(--border-color);
         border-radius: 24px 24px 0 0;
-        z-index: 100;
-        padding: 20px;
+        z-index: 200;
+        padding: 20px 16px;
         overflow-y: auto;
         transform: translateY(100%);
         transition: transform 0.3s ease-in-out;
         pointer-events: auto;
-        box-shadow: 0 -8px 30px rgba(0,0,0,0.5);
+        box-shadow: 0 -8px 30px rgba(0,0,0,0.6);
+        filter: none !important;
+        backdrop-filter: none !important;
     }
 
     .players-container.drawer-open {
@@ -643,11 +647,109 @@ body {
         color: white;
         border: 2px solid var(--border-color);
         border-radius: 12px;
-        padding: 10px;
-        font-weight: bold;
+        padding: 12px;
+        font-weight: 800;
+        font-size: 15px;
         margin-bottom: 15px;
         cursor: pointer;
         text-transform: uppercase;
+    }
+
+    /* --- CORREÇÃO DE MODAIS MOBILE (Quiz & Arena de Batalha) --- */
+    
+    .overlay-modal {
+        padding: 10px !important;
+        backdrop-filter: none !important;
+        background: rgba(0, 0, 0, 0.75) !important;
+        z-index: 300 !important;
+    }
+
+    .modal-content {
+        padding: 20px 16px !important;
+        border-width: 4px !important;
+        border-radius: 16px !important;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.4) !important;
+    }
+
+    /* Fix Bug 3: Quiz Modal Responsivo (Sem corte de texto) */
+    .quiz-content {
+        width: 94% !important;
+        max-width: 420px !important;
+        max-height: 88vh !important;
+        overflow-y: auto !important;
+    }
+
+    .quiz-content h2 {
+        font-size: 16px !important;
+        margin-bottom: 12px !important;
+        line-height: 1.35 !important;
+        text-align: center;
+    }
+
+    .quiz-options {
+        gap: 8px !important;
+        margin-bottom: 12px !important;
+    }
+
+    .btn-quiz-option {
+        padding: 10px 12px !important;
+        font-size: 13px !important;
+        border-width: 2px !important;
+        border-radius: 8px !important;
+        min-height: 44px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        box-shadow: 2px 2px 0 var(--border-color) !important;
+    }
+
+    .timer-bar-container {
+        height: 12px !important;
+        border-width: 2px !important;
+    }
+
+    /* Fix Bug 2: Arena de Batalha (Dados alinhados sem sobrepor) */
+    .battle-content {
+        width: 94% !important;
+        max-width: 400px !important;
+        max-height: 88vh !important;
+        overflow-y: auto !important;
+    }
+
+    .battle-content h2 {
+        font-size: 20px !important;
+        margin-bottom: 10px !important;
+    }
+
+    .battle-grid {
+        margin: 15px 0 !important;
+        justify-content: space-between !important;
+        gap: 8px !important;
+    }
+
+    .battle-col {
+        width: 48% !important;
+        gap: 8px !important;
+    }
+
+    .battle-col h3 {
+        font-size: 15px !important;
+    }
+
+    .dice-container {
+        gap: 4px !important;
+        justify-content: center !important;
+        flex-wrap: nowrap !important;
+    }
+
+    .dice {
+        width: 38px !important;
+        height: 38px !important;
+        font-size: 20px !important;
+        border-width: 3px !important;
+        border-radius: 8px !important;
+        box-shadow: 2px 2px 0 rgba(0,0,0,0.2) !important;
     }
 }
 
